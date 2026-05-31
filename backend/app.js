@@ -3,6 +3,7 @@ const express = require('express');
 const connectDB = require('./config/dbconexion');
 const escuelaRoutes = require('./Routes/escuelaRoutes');
 const usuarioRoutes = require('./Routes/usuarioRoutes');
+const retoRoutes = require('./Routes/retoRoutes');
 
 const app = express();
 const port = Number(process.env.PORT || process.env.POR) || 3000;
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/escuelas', escuelaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/retos', retoRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
