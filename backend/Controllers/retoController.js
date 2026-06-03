@@ -2,35 +2,17 @@ const mongoose = require('mongoose');
 const Reto = require('../Model/retoModel');
 const Escuela = require('../Model/escuelaModel');
 const Usuario = require('../Model/usuarioModel');
+const { crearManejadorErroresMongoose } = require('../utils/mongooseErrorHandler');
 
 const estadosPermitidos = ['borrador', 'publicado', 'cerrado'];
 const rolesCreadorPermitidos = ['profesor', 'administrador'];
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-const handleMongooseError = (error, res) => {
-  if (error.code === 11000) {
-    return res.status(409).json({
-      success: false,
-      message: 'Ya existe un reto con un valor unico duplicado.',
-      error: error.message,
-    });
-  }
-
-  if (error.name === 'ValidationError') {
-    return res.status(400).json({
-      success: false,
-      message: 'Datos invalidos para el reto.',
-      error: error.message,
-    });
-  }
-
-  return res.status(500).json({
-    success: false,
-    message: 'Error interno del servidor.',
-    error: error.message,
-  });
-};
+const manejarErrorMongoose = crearManejadorErroresMongoose({
+  duplicateMessage: 'Ya existe un reto con un valor unico duplicado.',
+  validationMessage: 'Datos invalidos para el reto.',
+});
 
 const validarEscuela = async (escuelaId, res) => {
   if (!isValidObjectId(escuelaId)) {
@@ -123,7 +105,7 @@ const crearReto = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -178,7 +160,7 @@ const obtenerRetos = async (req, res) => {
       data: retos,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -210,7 +192,7 @@ const obtenerRetoPorId = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -289,7 +271,7 @@ const actualizarReto = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -336,7 +318,7 @@ const publicarReto = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -370,7 +352,7 @@ const cerrarReto = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -407,7 +389,7 @@ const desactivarReto = async (req, res) => {
       data: reto,
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 

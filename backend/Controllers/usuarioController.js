@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Usuario = require('../Model/usuarioModel');
 const Escuela = require('../Model/escuelaModel');
+const { crearManejadorErroresMongoose } = require('../utils/mongooseErrorHandler');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -10,29 +11,10 @@ const sanitizeUsuario = (usuario) => {
   return usuarioLimpio;
 };
 
-const handleMongooseError = (error, res) => {
-  if (error.code === 11000) {
-    return res.status(409).json({
-      success: false,
-      message: 'Ya existe un usuario con ese email.',
-      error: error.message,
-    });
-  }
-
-  if (error.name === 'ValidationError') {
-    return res.status(400).json({
-      success: false,
-      message: 'Datos invalidos para el usuario.',
-      error: error.message,
-    });
-  }
-
-  return res.status(500).json({
-    success: false,
-    message: 'Error interno del servidor.',
-    error: error.message,
-  });
-};
+const manejarErrorMongoose = crearManejadorErroresMongoose({
+  duplicateMessage: 'Ya existe un usuario con ese email.',
+  validationMessage: 'Datos invalidos para el usuario.',
+});
 
 const validarEscuela = async (escuelaId, res) => {
   if (!isValidObjectId(escuelaId)) {
@@ -73,7 +55,7 @@ const crearUsuario = async (req, res) => {
       data: sanitizeUsuario(usuario),
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -107,7 +89,7 @@ const obtenerUsuarios = async (req, res) => {
       data: usuarios.map((usuario) => sanitizeUsuario(usuario)),
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -137,7 +119,7 @@ const obtenerUsuarioPorId = async (req, res) => {
       data: sanitizeUsuario(usuario),
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -191,7 +173,7 @@ const actualizarUsuario = async (req, res) => {
       data: sanitizeUsuario(usuario),
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 
@@ -228,7 +210,7 @@ const desactivarUsuario = async (req, res) => {
       data: sanitizeUsuario(usuario),
     });
   } catch (error) {
-    return handleMongooseError(error, res);
+    return manejarErrorMongoose(error, res);
   }
 };
 

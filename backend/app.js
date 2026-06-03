@@ -1,22 +1,25 @@
 require('dotenv').config();
-const express = require('express');
 const connectDB = require('./config/dbconexion');
+const express = require('express');
 const escuelaRoutes = require('./Routes/escuelaRoutes');
 const usuarioRoutes = require('./Routes/usuarioRoutes');
 const retoRoutes = require('./Routes/retoRoutes');
 
 const app = express();
-const port = Number(process.env.PORT || process.env.POR) || 3000;
+const port = Number(process.env.PORT || 3000);
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Ecotribu Backend is running!',
+    message: 'EcoTribu Backend está funcionando!',
+    console: '¡Bienvenido a la API de EcoTribu! Aquí puedes gestionar escuelas, usuarios y retos de manera eficiente.',
   });
 });
 
+// Rutas para las diferentes entidades del sistema. 
 app.use('/api/escuelas', escuelaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/retos', retoRoutes);
@@ -28,7 +31,10 @@ app.use((req, res) => {
   });
 });
 
-const startServer = async () => {
+
+// iniciar el servidor y conectar a la base de datos
+
+const iniciarServidor = async () => {
   try {
     await connectDB();
 
@@ -41,4 +47,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+iniciarServidor();

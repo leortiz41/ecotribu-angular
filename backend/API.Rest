@@ -1,0 +1,108 @@
+@baseUrl = http://localhost:3000
+@escuelaId = REEMPLAZA_ID_ESCUELA
+
+# ESCUELAS
+
+### Obtener escuelas
+GET {{baseUrl}}/api/escuelas
+
+### Crear escuela
+POST {{baseUrl}}/api/escuelas
+Content-Type: application/json
+
+{
+    "nombre": "Escuela Arnol David Sanchez",
+    "codigo": "ESC-002",
+    "departamento": "Cortes",
+    "municipio": "Santa Cruz de Yojoa",
+    "direccion": "Pena Blanca",
+    "activa": true
+}
+
+### Actualizar escuela (reemplaza el id)
+PUT {{baseUrl}}/api/escuelas/REEMPLAZA_ID_ESCUELA
+Content-Type: application/json
+
+{
+    "nombre": "Escuela Arnol David Sanchez Actualizada",
+    "codigo": "ESC-002",
+    "departamento": "Cortes",
+    "municipio": "Santa Cruz de Yojoa",
+    "direccion": "Pena Blanca",
+    "activa": true
+}
+
+### Desactivar/eliminar escuela (reemplaza el id)
+DELETE {{baseUrl}}/api/escuelas/REEMPLAZA_ID_ESCUELA
+
+
+
+# USUARIOS
+
+### Obtener usuarios
+GET {{baseUrl}}/api/usuarios
+
+### Crear usuario
+POST {{baseUrl}}/api/usuarios
+Content-Type: application/json
+
+{
+    "nombre": "Milton Ortiz",
+    "email": "milton.ortiz@correo.com",
+    "password": "123456",
+    "rol": "alumno",
+    "escuela": "6a1fe41b657bc97d75b4a48f",
+    "puntos": 0,
+    "activo": true
+}
+
+### Actualizar usuario (reemplaza el id)
+PUT {{baseUrl}}/api/usuarios/REEMPLAZA_ID_USUARIO
+Content-Type: application/json
+
+{
+    "nombre": "Juan Perez Actualizado",
+    "correo": "juan.perez@correo.com"
+}
+
+### Desactivar/eliminar usuario (reemplaza el id)
+DELETE {{baseUrl}}/api/usuarios/REEMPLAZA_ID_USUARIO
+
+
+
+
+# RETOS
+
+### Obtener retos
+GET {{baseUrl}}/api/retos
+
+### Crear reto
+POST {{baseUrl}}/api/retos
+Content-Type: application/json
+
+{
+    "titulo": "Reto de reciclaje",
+    "descripcion": "Recolectar 10 botellas plasticas en una semana"
+}
+
+### Actualizar reto (reemplaza el id)
+PUT {{baseUrl}}/api/retos/REEMPLAZA_ID_RETO
+Content-Type: application/json
+
+{
+    "titulo": "Reto de reciclaje actualizado",
+    "descripcion": "Recolectar 15 botellas plasticas en una semana"
+}
+
+### Publicar reto (reemplaza el id)
+PATCH {{baseUrl}}/api/retos/REEMPLAZA_ID_RETO/publicar
+
+### Cerrar reto (reemplaza el id)
+PATCH {{baseUrl}}/api/retos/REEMPLAZA_ID_RETO/cerrar
+
+### Desactivar/eliminar reto (reemplaza el id)
+DELETE {{baseUrl}}/api/retos/REEMPLAZA_ID_RETO
+
+
+
+
