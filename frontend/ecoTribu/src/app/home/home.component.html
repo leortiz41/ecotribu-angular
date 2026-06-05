@@ -1,0 +1,14 @@
+<p>Logging in...</p>    
+
+<h2>Usuarios</h2>
+table>
+  <tr>
+    <th>Nombre</th>
+    <th>Email</th>
+    <th>Rol</th>
+  </tr>
+  <tr *ngFor="let user of users">
+    <td>{{ user.name }}</td>
+    <td>{{ user.email }}</td>
+    <td>{{ user.role }}</td>
+  </tr>

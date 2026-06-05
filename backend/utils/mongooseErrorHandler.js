@@ -1,3 +1,7 @@
+
+
+
+//manejador de errorres de mongoose
 const crearManejadorErroresMongoose = ({ duplicateMessage, validationMessage }) => {
   return (error, res) => {
     if (error.code === 11000) {
@@ -8,10 +12,10 @@ const crearManejadorErroresMongoose = ({ duplicateMessage, validationMessage }) 
       });
     }
 
-    if (error.name === 'ValidationError') {
+    if (error.name === 'ValidandoError') {
       return res.status(400).json({
         success: false,
-        message: validationMessage,
+        message:validando,
         error: error.message,
       });
     }
