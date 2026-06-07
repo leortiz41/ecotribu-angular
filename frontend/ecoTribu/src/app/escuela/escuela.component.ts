@@ -1,13 +1,8 @@
 import { Component } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { routes } from '../app.routes'; 
-
-
 
 @Component({
 
   selector: 'app-escuela',
-  imports: [FormsModule],
   templateUrl: './escuela.component.html',
   styleUrl: './escuela.component.css'
 })
