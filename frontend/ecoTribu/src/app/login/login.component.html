@@ -1,71 +1,100 @@
+<main class="welcome-shell min-h-screen bg-[#ececec]">
+  <div class="ambient ambient-top"></div>
+  <div class="ambient ambient-bottom"></div>
 
-<section class="welcome-home eco-page">
-	<div class="welcome-surface eco-surface">
-		<div class="visual-panel" aria-label="Escenario visual de bienvenida">
-			<!-- <img
-				ngSrc="public/img/Solynube.png"
-				width="820"
-				height="250"
-				alt=""
-				class="decor sun-cloud"
-			/>
-			<img
-				ngSrc="public/img/nube.png"
-				width="280"
-				height="160"
-				alt=""
-				class="decor cloud-left"
-			/>
-			<img
-				ngSrc="public/img/nube.png"
-				width="280"
-				height="160"
-				alt=""
-				class="decor cloud-right"
-			/>
-			<img
-				ngSrc="public/img/mundo.png"
-				width="900"
-				height="900"
-				alt=""
-				class="decor world"
-			/>
-			<img
-				ngSrc="public/img/monte.png"
-				width="100"
-				height="700"
-				alt=""
-				class="decor mountain"
-			/> 
-			<img
-				ngSrc="public/img/EcoTribu.png"
-				width="240"
-				height="240"
-				alt="Logotipo de EcoTribu"
-				class="brand-logo"
-				priority
-			/> -->
-		</div>
+  <header class="relative z-10 bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+        </div>
+        <span class="brand-title text-3xl font-bold">EcoTribu</span>
+      </div>
+      <p class="hidden text-lg font-semibold sm:block">Inicio de Sesión</p>
+    </div>
+  </header>
 
-		<aside class="login-menu" aria-label="Menú principal de inicio">
-			<p class="eyebrow">Pantalla de bienvenida</p>
-			<h1>Recicla, conecta y crece con EcoTribu.</h1>
-			<p class="subtitle">
-				Todo el inicio en una sola vista: entra a tu cuenta o crea una nueva para empezar tu recorrido.
-			</p>
+  <section class="relative z-10 mx-auto max-w-6xl px-6 py-12 sm:px-10 md:py-16 lg:py-20">
+    <article class="hero-card overflow-hidden rounded-[2rem] border border-cyan-400/90 bg-[#ececec]/80 backdrop-blur-[2px] md:grid md:grid-cols-[1.02fr_0.98fr]">
+      <div class="relative bg-gradient-to-br from-cyan-500 via-emerald-300 to-yellow-300 px-8 py-14 sm:px-12 md:flex md:items-center md:justify-center">
+        <img
+          ngSrc="/img/Solynube.png"
+          width="820"
+          height="250"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-sun-cloud"
+        />
+        <img
+          ngSrc="/img/nube.png"
+          width="280"
+          height="160"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-cloud-left"
+        />
+        <img
+          ngSrc="/img/nube.png"
+          width="280"
+          height="160"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-cloud-right"
+        />
+        <img
+          ngSrc="/img/mundo.png"
+          width="900"
+          height="900"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-world"
+        />
+        <img
+          ngSrc="/img/monte.png"
+          width="300"
+          height="700"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-mountain"
+        />
+        <div class="left-glow"></div>
+        <div class="logo-frame mx-auto flex h-72 w-72 items-center justify-center rounded-[1.4rem] bg-white/38 p-6 backdrop-blur-md sm:h-80 sm:w-80">
+          <img ngSrc="/img/EcoTribu.png" width="240" height="240" alt="Isotipo de EcoTribu" class="h-full w-full object-contain" />
+        </div>
+      </div>
 
-			<nav class="actions" aria-label="Accesos de sesión">
-				<a routerLink="/login" class="eco-button action-primary">Iniciar sesión</a>
-				<a routerLink="/register" class="action-secondary">Registrarse</a>
-			</nav>
+      <div class="relative bg-[#ececec] px-8 py-10 sm:px-12 sm:py-12 lg:py-14">
+        <img
+          ngSrc="/img/flechas.png"
+          width="280"
+          height="280"
+          alt=""
+          aria-hidden="true"
+          class="decor decor-arrows"
+        />
+        <p class="mb-5 text-center text-[1.55rem] font-extrabold tracking-[0.52rem] text-emerald-700 sm:text-left sm:text-[1.72rem] lg:text-[1.88rem]">
+          BIENVENIDO A ECOTRIBU
+        </p>
 
-			<div class="quick-links" aria-label="Accesos rápidos">
-				<a routerLink="/educativo">Zona educativa</a>
-				<a routerLink="/mapa">Mapa</a>
-				<a routerLink="/donacion">Donaciones</a>
-			</div>
-		</aside>
-	</div>
-</section>
+        <h1 class="mb-5 max-w-xl text-[2.1rem] font-black uppercase leading-[1.1] text-black sm:text-[2.6rem] lg:text-[3rem]">
+          Recicla, conecta y crece con EcoTribu.
+        </h1>
+
+        <p class="mb-8 max-w-lg text-xl leading-[1.22] text-emerald-700/95 sm:text-2xl">
+          Entra a tu cuenta o crea una cuenta para empezar tu recorrido de aprendizaje y diversión.
+        </p>
+
+        <div class="space-y-4">
+          <a routerLink="/login" class="btn-primary block w-full rounded-full px-6 py-4 text-center text-2xl font-extrabold text-white">
+            Iniciar Sesión
+          </a>
+          <a routerLink="/register" class="btn-secondary block w-full rounded-full border px-6 py-4 text-center text-2xl font-extrabold text-black">
+            Registrarse
+          </a>
+        </div>
+      </div>
+    </article>
+  </section>
+</main>
 
 

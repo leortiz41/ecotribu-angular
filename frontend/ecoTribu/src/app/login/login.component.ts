@@ -6,12 +6,7 @@ import { RouterLink } from '@angular/router';
   selector: 'app-login',
   imports: [RouterLink, NgOptimizedImage],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-
-
-
-
-  
 }

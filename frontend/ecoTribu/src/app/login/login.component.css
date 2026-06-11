@@ -1,0 +1,199 @@
+:host {
+	display: block;
+	color: #0f172a;
+	font-family: 'Avenir Next', 'Segoe UI', 'Trebuchet MS', sans-serif;
+}
+
+.brand-title {
+	font-family: 'Avenir Next Condensed', 'Gill Sans', 'Trebuchet MS', sans-serif;
+	letter-spacing: 0.02em;
+}
+
+.welcome-shell {
+	position: relative;
+	overflow: hidden;
+}
+
+.ambient {
+	position: absolute;
+	border-radius: 9999px;
+	pointer-events: none;
+	filter: blur(24px);
+}
+
+.ambient-top {
+	top: 86px;
+	right: -88px;
+	width: 260px;
+	height: 260px;
+	background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%);
+}
+
+.ambient-bottom {
+	bottom: -110px;
+	left: -96px;
+	width: 320px;
+	height: 320px;
+	background: radial-gradient(circle, rgba(16, 185, 129, 0.24) 0%, rgba(16, 185, 129, 0) 72%);
+}
+
+.hero-card {
+	box-shadow: 0 26px 70px rgba(15, 23, 42, 0.13);
+	animation: card-enter 560ms ease-out both;
+}
+
+.logo-frame {
+	position: relative;
+	z-index: 3;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 24px 42px rgba(15, 23, 42, 0.18);
+	animation: logo-float 4.2s ease-in-out infinite;
+}
+
+.decor {
+	position: absolute;
+	pointer-events: none;
+	user-select: none;
+	z-index: 1;
+}
+
+.decor-sun-cloud {
+	top: -20px;
+	left: -60px;
+	width: clamp(320px, 55vw, 520px);
+	opacity: 0.25;
+	mix-blend-mode: screen;
+}
+
+.decor-cloud-left {
+	top: 8%;
+	left: 5%;
+	width: clamp(110px, 14vw, 165px);
+	opacity: 0.45;
+	animation: drift-cloud 12s ease-in-out infinite;
+}
+
+.decor-cloud-right {
+	bottom: 16%;
+	right: 8%;
+	width: clamp(120px, 16vw, 185px);
+	opacity: 0.42;
+	animation: drift-cloud 14s ease-in-out infinite reverse;
+}
+
+.decor-world {
+	bottom: -170px;
+	left: -120px;
+	width: clamp(300px, 36vw, 450px);
+	opacity: 0.2;
+	filter: saturate(110%);
+}
+
+.decor-mountain {
+	bottom: -88px;
+	right: -18px;
+	width: clamp(120px, 17vw, 190px);
+	opacity: 0.28;
+}
+
+.decor-arrows {
+	top: 16px;
+	right: 18px;
+	width: clamp(62px, 10vw, 100px);
+	opacity: 0.12;
+	transform: rotate(-12deg);
+	filter: saturate(120%);
+	z-index: 0;
+}
+
+.left-glow {
+	position: absolute;
+	inset: auto auto 22px 16px;
+	width: 180px;
+	height: 180px;
+	border-radius: 9999px;
+	background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
+	z-index: 2;
+}
+
+.btn-primary {
+	background: linear-gradient(135deg, #047857 0%, #0f8f69 100%);
+	box-shadow: 0 12px 22px rgba(6, 95, 70, 0.25);
+	transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.btn-primary:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.03);
+	box-shadow: 0 16px 24px rgba(6, 95, 70, 0.34);
+}
+
+.btn-secondary {
+	border-color: rgba(15, 23, 42, 0.72);
+	background: rgba(255, 255, 255, 0.58);
+	transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.btn-secondary:hover {
+	transform: translateY(-1px);
+	background: rgba(255, 255, 255, 0.92);
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+	outline: 3px solid rgba(6, 95, 70, 0.3);
+	outline-offset: 2px;
+}
+
+@keyframes card-enter {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes logo-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-6px);
+	}
+}
+
+@keyframes drift-cloud {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	50% {
+		transform: translateX(8px);
+	}
+}
+
+@media (max-width: 768px) {
+	.brand-title {
+		font-size: 1.72rem;
+	}
+
+	.ambient-top,
+	.ambient-bottom {
+		opacity: 0.5;
+	}
+
+	.decor-sun-cloud,
+	.decor-world,
+	.decor-mountain {
+		opacity: 0.15;
+	}
+
+	.decor-cloud-left,
+	.decor-cloud-right,
+	.decor-arrows {
+		display: none;
+	}
+}
