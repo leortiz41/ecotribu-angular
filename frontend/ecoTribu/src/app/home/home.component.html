@@ -1,15 +1,26 @@
-<p>Logging in...</p>    
+<section class="mx-auto max-w-4xl px-4 py-10">
+  <p class="mb-4 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">
+    Tailwind activo
+  </p>
 
-<h2>Usuarios</h2>
-<table>
-  <tr>
-    <th>Nombre</th>
-    <th>Email</th>
-    <th>Rol</th>
-  </tr>
-  <tr *ngFor="let user of users">
-    <td>{{ user.name }}</td>
-    <td>{{ user.email }}</td>
-    <td>{{ user.role }}</td>
-  </tr>
-</table>
+  <h2 class="mb-6 text-3xl font-bold tracking-tight text-slate-900">Usuarios</h2>
+
+  <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200 bg-white text-sm">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">Nombre</th>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">Email</th>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">Rol</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngFor="let user of users" class="transition hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-800">{{ user.name }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ user.email }}</td>
+          <td class="px-4 py-3 font-medium text-emerald-700">{{ user.role }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
