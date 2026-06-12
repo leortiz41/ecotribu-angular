@@ -1,7 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { RegistroComponent } from './registro.component';
 import { provideRouter } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+const authServiceMock = {
+  obtenerEscuelas: () => of({ success: true, message: 'Escuelas cargadas.', data: [] }),
+  registrarUsuario: () => of({ success: true, message: 'Usuario creado.' }),
+};
 
 describe('RegistroComponent', () => {
   let component: RegistroComponent;
@@ -10,7 +17,7 @@ describe('RegistroComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RegistroComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), { provide: AuthService, useValue: authServiceMock }]
     })
     .compileComponents();
 

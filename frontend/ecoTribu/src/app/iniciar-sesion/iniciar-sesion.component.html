@@ -1,0 +1,97 @@
+<main class="sesion-shell min-h-screen bg-[#ececec]">
+  <div class="ambient ambient-top"></div>
+  <div class="ambient ambient-bottom"></div>
+
+  <header class="relative z-10 bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+        </div>
+        <span class="brand-title text-2xl font-bold">EcoTribu</span>
+      </div>
+      <a routerLink="/" class="btn-back rounded-full px-4 py-2 text-sm font-semibold text-white">
+        Volver
+      </a>
+    </div>
+  </header>
+
+  <section class="relative z-10 flex min-h-[calc(100vh-88px)] items-center justify-center px-6 py-10 sm:px-10">
+    <article class="hero-card w-full max-w-md rounded-[2rem] border border-cyan-400/90 bg-[#ececec]/80 p-8 backdrop-blur-[2px] sm:p-10">
+
+      <div class="mb-8 text-center">
+        <div class="mb-4 flex justify-center">
+          <div class="rounded-2xl bg-emerald-700 p-3">
+            <img ngSrc="/img/EcoTribu Blanco.png" width="48" height="48" alt="Logo EcoTribu" priority />
+          </div>
+        </div>
+        <p class="mb-2 text-sm font-extrabold tracking-[0.32rem] text-emerald-700">BIENVENIDO</p>
+        <h1 class="text-3xl font-black uppercase leading-tight text-black sm:text-4xl">Iniciar Sesión</h1>
+        <p class="mt-2 text-emerald-700/80">Ingresa tus credenciales para acceder</p>
+      </div>
+
+      <form [formGroup]="sesionForm" (ngSubmit)="iniciarSesion()" class="space-y-5">
+
+        <div>
+          <label for="email" class="field-label">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            class="field-input"
+            formControlName="email"
+            placeholder="usuario@ecotribu.hn"
+            autocomplete="email"
+          />
+          <p *ngIf="sesionForm.controls.email.touched && sesionForm.controls.email.invalid" class="field-error">
+            <ng-container *ngIf="sesionForm.controls.email.hasError('required')">El correo es obligatorio.</ng-container>
+            <ng-container *ngIf="sesionForm.controls.email.hasError('email')">Ingresa un correo válido.</ng-container>
+          </p>
+        </div>
+
+        <div>
+          <label for="password" class="field-label">Contraseña</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="mostrarPassword ? 'text' : 'password'"
+              class="field-input"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="toggle-pass"
+              (click)="togglePassword()"
+              [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            >
+              {{ mostrarPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+          <p *ngIf="sesionForm.controls.password.touched && sesionForm.controls.password.invalid" class="field-error">
+            <ng-container *ngIf="sesionForm.controls.password.hasError('required')">La contraseña es obligatoria.</ng-container>
+            <ng-container *ngIf="sesionForm.controls.password.hasError('minlength')">Mínimo 6 caracteres.</ng-container>
+          </p>
+        </div>
+
+        <div *ngIf="mensajeError" class="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-300">
+          {{ mensajeError }}
+        </div>
+
+        <button
+          type="submit"
+          class="btn-primary w-full rounded-full py-4 text-lg font-extrabold text-white"
+          [disabled]="cargando"
+        >
+          <span *ngIf="!cargando">Iniciar Sesión</span>
+          <span *ngIf="cargando">Verificando...</span>
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-slate-600">
+        ¿No tienes cuenta?
+        <a routerLink="/register" class="font-bold text-emerald-700 hover:underline">Regístrate aquí</a>
+      </p>
+    </article>
+  </section>
+</main>

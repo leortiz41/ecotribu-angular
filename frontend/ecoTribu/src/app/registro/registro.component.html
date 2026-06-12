@@ -1,0 +1,149 @@
+<main class="registro-shell min-h-screen bg-[#ececec]">
+  <div class="ambient ambient-top"></div>
+  <div class="ambient ambient-bottom"></div>
+
+  <header class="relative z-10 bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+        </div>
+        <span class="brand-title text-2xl font-bold">EcoTribu</span>
+      </div>
+      <p class="text-lg font-bold">Registro</p>
+    </div>
+  </header>
+
+  <section class="relative z-10 flex min-h-[calc(100vh-88px)] items-center justify-center px-6 py-10 sm:px-10">
+    <article class="hero-card w-full max-w-4xl rounded-[2rem] border border-cyan-300/90 bg-gradient-to-b from-cyan-200 to-amber-100 p-8 sm:p-10">
+
+      <div class="mb-8 text-center">
+        <h1 class="text-4xl font-black text-emerald-700">Registro</h1>
+        <p class="mt-3 text-lg text-slate-700">
+          Crea tu perfil para comenzar y ser parte de esta familia que cuidamos el planeta
+        </p>
+      </div>
+
+      <form [formGroup]="formularioRegistro" (ngSubmit)="registrarse()" class="form-grid">
+
+        <div>
+          <label for="nombre" class="field-label">Nombre completo</label>
+          <input
+            id="nombre"
+            type="text"
+            class="field-input"
+            formControlName="nombre"
+            placeholder="Escribe tu nombre"
+            autocomplete="name"
+          />
+          <p *ngIf="formularioRegistro.controls.nombre.touched && formularioRegistro.controls.nombre.invalid" class="field-error">
+            El nombre es obligatorio (mínimo 2 caracteres).
+          </p>
+        </div>
+
+        <div>
+          <label for="email" class="field-label">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            class="field-input"
+            formControlName="email"
+            placeholder="Escribe tu e-mail"
+            autocomplete="email"
+          />
+          <p *ngIf="formularioRegistro.controls.email.touched && formularioRegistro.controls.email.invalid" class="field-error">
+            <ng-container *ngIf="formularioRegistro.controls.email.hasError('required')">El correo es obligatorio.</ng-container>
+            <ng-container *ngIf="formularioRegistro.controls.email.hasError('email')">Ingresa un correo válido.</ng-container>
+          </p>
+        </div>
+
+        <div>
+          <label for="password" class="field-label">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            class="field-input"
+            formControlName="password"
+            placeholder="Contraseña"
+            autocomplete="new-password"
+          />
+          <p *ngIf="formularioRegistro.controls.password.touched && formularioRegistro.controls.password.invalid" class="field-error">
+            <ng-container *ngIf="formularioRegistro.controls.password.hasError('required')">La contraseña es obligatoria.</ng-container>
+            <ng-container *ngIf="formularioRegistro.controls.password.hasError('minlength')">Mínimo 6 caracteres.</ng-container>
+          </p>
+        </div>
+
+        <div>
+          <label for="rol" class="field-label">Rol</label>
+          <select id="rol" class="field-input" formControlName="rol">
+            <option *ngFor="let rol of roles" [value]="rol.value">{{ rol.label }}</option>
+          </select>
+          <p *ngIf="formularioRegistro.controls.rol.touched && formularioRegistro.controls.rol.invalid" class="field-error">
+            El rol es obligatorio.
+          </p>
+        </div>
+
+        <div>
+          <label for="escuela" class="field-label">Escuela</label>
+          <input
+            id="escuela"
+            type="text"
+            class="field-input"
+            formControlName="escuela"
+            placeholder="Centro Educativo Matriculado"
+            [attr.list]="escuelas.length > 0 ? 'escuelasDisponibles' : null"
+          />
+          <datalist id="escuelasDisponibles">
+            <option *ngFor="let escuela of escuelas" [value]="escuela._id">
+              {{ escuela.nombre }}{{ escuela.codigo ? ' - ' + escuela.codigo : '' }}
+            </option>
+          </datalist>
+          <p *ngIf="cargandoEscuelas" class="field-help">
+            Cargando escuelas...
+          </p>
+          <p *ngIf="!cargandoEscuelas && escuelas.length > 0" class="field-help">
+            Selecciona una escuela o pega su ID.
+          </p>
+          <p *ngIf="formularioRegistro.controls.escuela.touched && formularioRegistro.controls.escuela.invalid" class="field-error">
+            La escuela es obligatoria.
+          </p>
+        </div>
+
+        <div>
+          <label for="gradoSeccion" class="field-label">Grado Sección</label>
+          <input
+            id="gradoSeccion"
+            type="text"
+            class="field-input"
+            formControlName="gradoSeccion"
+            placeholder="9no A"
+          />
+        </div>
+
+        <div *ngIf="mensajeError" class="message-error">
+          {{ mensajeError }}
+        </div>
+
+        <div *ngIf="mensajeExito" class="message-success">
+          {{ mensajeExito }}
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn-primary rounded-full px-10 py-3 text-xl font-extrabold text-white"
+            [disabled]="cargandoRegistro"
+          >
+            <span *ngIf="!cargandoRegistro">Registrar</span>
+            <span *ngIf="cargandoRegistro">Registrando...</span>
+          </button>
+        </div>
+
+        <p class="form-footer text-center text-sm text-slate-600">
+          ¿Ya tienes cuenta?
+          <a routerLink="/iniciar-sesion" class="font-bold text-emerald-700 hover:underline">Inicia sesión</a>
+        </p>
+      </form>
+    </article>
+  </section>
+</main>

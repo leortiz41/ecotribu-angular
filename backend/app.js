@@ -5,12 +5,16 @@ const escuelaRoutes = require('./Routes/escuelaRoutes');
 const usuarioRoutes = require('./Routes/usuarioRoutes');
 const retoRoutes = require('./Routes/retoRoutes');
 const authRoutes = require('./Routes/authRoutes');
+const cors = require('cors');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// CORS permitir conexión con el frontend.
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.json({
