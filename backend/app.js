@@ -7,6 +7,7 @@ const retoRoutes = require('./Routes/retoRoutes');
 const authRoutes = require('./Routes/authRoutes');
 const evidenciaRoutes = require('./Routes/evidenciaRoutes');
 const cuestionarioRoutes = require('./Routes/cuestionarioRoutes');
+const resultadoCuestionarioRoutes = require('./Routes/resultadoCuestionarioRoutes');
 const cors = require('cors');
 
 const app = express();
@@ -14,9 +15,8 @@ const port = Number(process.env.PORT || 3000);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// CORS permitir conexión con el frontend.
 app.use(cors());
+
 
 app.get('/', (req, res) => {
   res.json({
@@ -33,6 +33,7 @@ app.use('/api/retos', retoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/evidencias', evidenciaRoutes);
 app.use('/api/cuestionarios', cuestionarioRoutes);
+app.use('/api/resultados-cuestionarios', resultadoCuestionarioRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
