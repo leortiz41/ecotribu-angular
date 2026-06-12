@@ -1,5 +1,18 @@
 @baseUrl = http://localhost:3000
 @escuelaId = REEMPLAZA_ID_ESCUELA
+@usuarioEmail = milton.ortiz@correo.com
+@usuarioPassword = 123456
+
+# AUTH
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{usuarioEmail}}",
+    "password": "{{usuarioPassword}}"
+}
 
 # ESCUELAS
 
@@ -62,7 +75,7 @@ Content-Type: application/json
 
 {
     "nombre": "Juan Perez Actualizado",
-    "correo": "juan.perez@correo.com"
+    "email": "juan.perez@correo.com"
 }
 
 ### Desactivar/eliminar usuario (reemplaza el id)

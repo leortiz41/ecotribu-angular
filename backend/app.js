@@ -4,6 +4,7 @@ const express = require('express');
 const escuelaRoutes = require('./Routes/escuelaRoutes');
 const usuarioRoutes = require('./Routes/usuarioRoutes');
 const retoRoutes = require('./Routes/retoRoutes');
+const authRoutes = require('./Routes/authRoutes');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -23,6 +24,7 @@ app.get('/', (req, res) => {
 app.use('/api/escuelas', escuelaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/retos', retoRoutes);
+app.use('/api/auth', authRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
