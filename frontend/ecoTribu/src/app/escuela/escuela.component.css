@@ -1,0 +1,149 @@
+:host {
+  display: block;
+  color: #0f172a;
+  font-family: 'Avenir Next', 'Segoe UI', 'Trebuchet MS', sans-serif;
+}
+
+.brand-title {
+  font-family: 'Avenir Next Condensed', 'Gill Sans', 'Trebuchet MS', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.escuela-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.ambient {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(24px);
+}
+
+.ambient-top {
+  top: 86px;
+  right: -88px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%);
+}
+
+.ambient-bottom {
+  bottom: -110px;
+  left: -96px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.24) 0%, rgba(16, 185, 129, 0) 72%);
+}
+
+.hero-card {
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.13);
+  animation: card-enter 560ms ease-out both;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #047857 0%, #0f8f69 100%);
+  box-shadow: 0 12px 22px rgba(6, 95, 70, 0.25);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+  box-shadow: 0 16px 24px rgba(6, 95, 70, 0.34);
+}
+
+.btn-secondary {
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+}
+
+.btn-back {
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 180ms ease;
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.field-label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.field-input {
+  width: 100%;
+  border: 1px solid #86efac;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.72rem 0.88rem;
+  color: #0f172a;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.field-error {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  color: #dc2626;
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 760px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: span 1;
+  }
+
+  .actions {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+}

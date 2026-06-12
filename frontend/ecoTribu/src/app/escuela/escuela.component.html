@@ -1,1 +1,128 @@
 
+<main class="escuela-shell min-h-screen bg-[#ececec]">
+  <div class="ambient ambient-top"></div>
+  <div class="ambient ambient-bottom"></div>
+
+  <header class="relative z-10 bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+        </div>
+        <span class="brand-title text-2xl font-bold">EcoTribu</span>
+      </div>
+      <a routerLink="/iniciar-sesion" class="btn-back rounded-full px-4 py-2 text-sm font-semibold text-white">
+        Volver
+      </a>
+    </div>
+  </header>
+
+  <section class="relative z-10 mx-auto w-full max-w-6xl px-6 py-10 sm:px-10 md:py-14">
+    <article class="hero-card rounded-[2rem] border border-cyan-400/90 bg-[#ececec]/80 p-6 backdrop-blur-[2px] sm:p-8">
+      <div class="mb-8">
+        <p class="mb-3 text-sm font-extrabold tracking-[0.32rem] text-emerald-700">GESTIÓN DE ESCUELA</p>
+        <h1 class="mb-3 text-3xl font-black uppercase leading-tight text-black sm:text-4xl">
+          Formulario de escuela
+        </h1>
+        <p class="max-w-3xl text-lg text-emerald-700/95">
+          Completa y valida los datos para enviarlos al backend cuando la API esté lista.
+        </p>
+      </div>
+
+      <form [formGroup]="escuelaForm" (ngSubmit)="guardarEscuela()" class="form-grid rounded-2xl bg-white/75 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] sm:p-6">
+        <div>
+          <label for="nombreEscuela" class="field-label">Nombre Escuela</label>
+          <input id="nombreEscuela" type="text" class="field-input" formControlName="nombreEscuela" placeholder="Ej: Escuela José Cecilio del Valle" />
+          <p *ngIf="escuelaForm.controls.nombreEscuela.touched && escuelaForm.controls.nombreEscuela.invalid" class="field-error">
+            El nombre es obligatorio (mínimo 3 caracteres).
+          </p>
+        </div>
+
+        <div>
+          <label for="codigoEscuela" class="field-label">Código Escuela</label>
+          <input id="codigoEscuela" type="text" class="field-input" formControlName="codigoEscuela" placeholder="Ej: ESC-001" />
+          <p *ngIf="escuelaForm.controls.codigoEscuela.touched && escuelaForm.controls.codigoEscuela.invalid" class="field-error">
+            Ingresa un código válido (letras, números o guiones).
+          </p>
+        </div>
+
+        <div class="full-width">
+          <label for="direccion" class="field-label">Dirección</label>
+          <input id="direccion" type="text" class="field-input" formControlName="direccion" placeholder="Colonia, calle, referencia" />
+          <p *ngIf="escuelaForm.controls.direccion.touched && escuelaForm.controls.direccion.invalid" class="field-error">
+            La dirección es obligatoria.
+          </p>
+        </div>
+
+        <div>
+          <label for="ciudadPueblo" class="field-label">Ciudad o pueblo</label>
+          <input id="ciudadPueblo" type="text" class="field-input" formControlName="ciudadPueblo" placeholder="Ej: San Pedro Sula" />
+          <p *ngIf="escuelaForm.controls.ciudadPueblo.touched && escuelaForm.controls.ciudadPueblo.invalid" class="field-error">
+            Este campo es obligatorio.
+          </p>
+        </div>
+
+        <div>
+          <label for="departamento" class="field-label">Departamento</label>
+          <select id="departamento" class="field-input" formControlName="departamento">
+            <option value="">Selecciona un departamento</option>
+            <option *ngFor="let item of departamentos" [value]="item">{{ item }}</option>
+          </select>
+          <p *ngIf="escuelaForm.controls.departamento.touched && escuelaForm.controls.departamento.invalid" class="field-error">
+            Selecciona un departamento.
+          </p>
+        </div>
+
+        <div>
+          <label for="telefono" class="field-label">Teléfono</label>
+          <input id="telefono" type="tel" class="field-input" formControlName="telefono" placeholder="Ej: 9999-9999" />
+          <p *ngIf="escuelaForm.controls.telefono.touched && escuelaForm.controls.telefono.invalid" class="field-error">
+            Ingresa un teléfono válido.
+          </p>
+        </div>
+
+        <div>
+          <label for="correo" class="field-label">Correo</label>
+          <input id="correo" type="email" class="field-input" formControlName="correo" placeholder="ejemplo@escuela.hn" />
+          <p *ngIf="escuelaForm.controls.correo.touched && escuelaForm.controls.correo.invalid" class="field-error">
+            Ingresa un correo válido.
+          </p>
+        </div>
+
+        <div>
+          <label for="estado" class="field-label">Estado</label>
+          <select id="estado" class="field-input" formControlName="estado">
+            <option value="ACTIVA">Activa</option>
+            <option value="INACTIVA">Inactiva</option>
+          </select>
+        </div>
+
+        <div class="actions full-width">
+          <button type="button" class="btn-secondary rounded-full px-6 py-3 text-base font-bold" (click)="limpiarFormulario()">
+            Limpiar
+          </button>
+          <button type="submit" class="btn-primary rounded-full px-6 py-3 text-base font-extrabold text-white">
+            Validar y preparar envío
+          </button>
+        </div>
+      </form>
+
+      <section *ngIf="envioListo && payloadEscuela" class="mt-8 rounded-2xl border border-emerald-500/50 bg-white/80 p-5">
+        <h2 class="text-xl font-bold text-emerald-800">Payload listo para backend</h2>
+        <p class="mt-2 text-sm text-emerald-900/80">
+          Este objeto ya está validado y listo para enviarse al servicio cuando se conecte la API.
+        </p>
+        <div class="mt-4 grid gap-2 text-sm text-slate-800 sm:grid-cols-2">
+          <p><strong>Nombre:</strong> {{ payloadEscuela.nombreEscuela }}</p>
+          <p><strong>Código:</strong> {{ payloadEscuela.codigoEscuela }}</p>
+          <p><strong>Dirección:</strong> {{ payloadEscuela.direccion }}</p>
+          <p><strong>Ciudad/Pueblo:</strong> {{ payloadEscuela.ciudadPueblo }}</p>
+          <p><strong>Departamento:</strong> {{ payloadEscuela.departamento }}</p>
+          <p><strong>Teléfono:</strong> {{ payloadEscuela.telefono }}</p>
+          <p><strong>Correo:</strong> {{ payloadEscuela.correo }}</p>
+          <p><strong>Estado:</strong> {{ payloadEscuela.estado }}</p>
+        </div>
+      </section>
+    </article>
+  </section>
+</main>
