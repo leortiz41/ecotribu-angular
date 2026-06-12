@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-iniciar-sesion',
   imports: [ReactiveFormsModule, NgIf, RouterLink, NgOptimizedImage],
   templateUrl: './iniciar-sesion.component.html',
-  styleUrl: './iniciar-sesion.component.css',
+  styleUrls: ['./iniciar-sesion.component.css'],
 })
 export class IniciarSesionComponent {
   private readonly fb = inject(FormBuilder);
@@ -43,14 +43,35 @@ export class IniciarSesionComponent {
     this.authService.iniciarSesion({ email, password }).subscribe({
       next: (res) => {
         this.cargando = false;
-        if (res.success) {
-          this.router.navigate(['/educativo']);
+        if (!res.success || !res.data) {
+          this.mensajeError = res.message || 'No fue posible iniciar sesión.';
+          return;
         }
+
+        this.authService.guardarSesion(res.data);
+
+        this.redireccionarPorRol(res.data.rol);
       },
       error: (err: HttpErrorResponse) => {
         this.cargando = false;
         this.mensajeError = err.error?.message ?? 'Error al conectar con el servidor.';
       },
     });
+  }
+
+  private redireccionarPorRol(rol: string): void {
+    switch (rol) {
+      case 'alumno':
+        void this.router.navigate(['/perfil-alumno']);
+        return;
+      case 'profesor':
+        void this.router.navigate(['/perfil-profesor']);
+        return;
+      case 'administrador':
+        void this.router.navigate(['/perfil-administrador']);
+        return;
+      default:
+        this.mensajeError = 'El rol de la cuenta no es válido para esta aplicación.';
+    }
   }
 }

@@ -1,18 +1,18 @@
 const express = require('express');
 const {
-  crearCuestionario,
-  obtenerCuestionarios,
-  obtenerCuestionarioPorId,
-  actualizarCuestionario,
-  desactivarCuestionario,
-} = require('../Controllers/cuestionarioController');
+  crearResultadoCuestionario,
+  obtenerResultadosCuestionario,
+  obtenerResultadoCuestionarioPorId,
+  actualizarResultadoCuestionario,
+  desactivarResultadoCuestionario,
+} = require('../Controllers/resultadoCuestionarioController');
 
 const router = express.Router();
 
-router.post('/', crearCuestionario);
-router.get('/', obtenerCuestionarios);
-router.get('/:id', obtenerCuestionarioPorId);
-router.put('/:id', actualizarCuestionario);
-router.delete('/:id', desactivarCuestionario);
+router.post('/', crearResultadoCuestionario);
+router.get('/', obtenerResultadosCuestionario);
+router.get('/:id', obtenerResultadoCuestionarioPorId);
+router.put('/:id', actualizarResultadoCuestionario);
+router.delete('/:id', desactivarResultadoCuestionario);
 
 module.exports = router;

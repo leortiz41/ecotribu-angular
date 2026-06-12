@@ -46,6 +46,7 @@ export interface RespuestaApi<T> {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly sesionStorageKey = 'ecotribu.sesion';
   private readonly authApiUrl = 'http://localhost:3000/api/auth';
   private readonly usuariosApiUrl = 'http://localhost:3000/api/usuarios';
   private readonly escuelasApiUrl = 'http://localhost:3000/api/escuelas';
@@ -60,5 +61,38 @@ export class AuthService {
 
   obtenerEscuelas(): Observable<RespuestaApi<EscuelaCatalogo[]>> {
     return this.http.get<RespuestaApi<EscuelaCatalogo[]>>(this.escuelasApiUrl);
+  }
+
+  guardarSesion(usuario: UsuarioSesion): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.setItem(this.sesionStorageKey, JSON.stringify(usuario));
+  }
+
+  obtenerSesionGuardada(): UsuarioSesion | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    const raw = localStorage.getItem(this.sesionStorageKey);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw) as UsuarioSesion;
+    } catch {
+      return null;
+    }
+  }
+
+  cerrarSesionGuardada(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.removeItem(this.sesionStorageKey);
   }
 }
