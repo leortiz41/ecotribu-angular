@@ -6,6 +6,7 @@ const usuarioRoutes = require('./Routes/usuarioRoutes');
 const retoRoutes = require('./Routes/retoRoutes');
 const authRoutes = require('./Routes/authRoutes');
 const evidenciaRoutes = require('./Routes/evidenciaRoutes');
+const cuestionarioRoutes = require('./Routes/cuestionarioRoutes');
 const cors = require('cors');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/retos', retoRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/evidencias', evidenciaRoutes);
+app.use('/api/cuestionarios', cuestionarioRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
