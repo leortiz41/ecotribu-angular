@@ -1,5 +1,6 @@
 import { CommonModule, NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
@@ -59,6 +60,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   modalEdicionEscuelaAbierto = false;
   usuarioEnEdicionId: string | null = null;
   modalEdicionUsuarioAbierto = false;
+  private bloqueoTemporalCierreModalUsuario = false;
   @ViewChild('adminChart') private adminChartCanvas?: ElementRef<HTMLCanvasElement>;
   private adminChart: Chart | null = null;
 
@@ -141,6 +143,17 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   ngOnDestroy(): void {
     this.adminChart?.destroy();
+    this.restaurarScrollBody();
+  }
+
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeModalUsuario(event: Event): void {
+    if (!this.modalEdicionUsuarioAbierto) {
+      return;
+    }
+
+    event.preventDefault();
+    this.cerrarModalEdicionUsuario();
   }
 
   cambiarVista(vista: VistaAdmin): void {
@@ -236,6 +249,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   cancelarEdicionUsuario(): void {
     this.usuarioEnEdicionId = null;
     this.modalEdicionUsuarioAbierto = false;
+    this.sincronizarScrollBodyConModalUsuario();
     this.usuarioForm.reset({
       nombre: '',
       email: '',
@@ -327,9 +341,14 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     });
   }
 
-  editarUsuario(usuario: UsuarioAdmin): void {
+  editarUsuario(usuario: UsuarioAdmin, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    this.bloqueoTemporalCierreModalUsuario = true;
     this.usuarioEnEdicionId = usuario._id;
     this.modalEdicionUsuarioAbierto = true;
+    this.sincronizarScrollBodyConModalUsuario();
     this.configurarFormularioUsuarioParaEditar();
     this.usuarioForm.patchValue({
       nombre: usuario.nombre ?? '',
@@ -341,10 +360,24 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     });
     this.mensajeError = null;
     this.mensajeAccion = `Editando usuario: ${usuario.nombre}`;
+
+    setTimeout(() => {
+      this.bloqueoTemporalCierreModalUsuario = false;
+    }, 0);
   }
 
   cerrarModalEdicionUsuario(): void {
     this.cancelarEdicionUsuario();
+  }
+
+  manejarClickBackdropModalUsuario(event: MouseEvent): void {
+    if (this.bloqueoTemporalCierreModalUsuario) {
+      return;
+    }
+
+    if (event.target === event.currentTarget) {
+      this.cerrarModalEdicionUsuario();
+    }
   }
 
   eliminarUsuario(usuario: UsuarioAdmin): void {
@@ -377,13 +410,17 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     }
 
     const value = this.usuarioForm.getRawValue();
+    const escuelaSeleccionada = value.escuela.trim();
     const payload: ActualizarUsuarioAdminPayload = {
       nombre: value.nombre.trim(),
       email: value.email.trim(),
       rol: value.rol as 'alumno' | 'profesor' | 'administrador',
-      escuela: value.escuela,
       grado: value.grado.trim() || undefined,
     };
+
+    if (escuelaSeleccionada.length > 0) {
+      payload.escuela = escuelaSeleccionada;
+    }
 
     if (value.password.trim().length > 0) {
       payload.password = value.password;
@@ -395,6 +432,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
         this.mensajeAccion = 'Usuario actualizado correctamente.';
         this.usuarioEnEdicionId = null;
         this.modalEdicionUsuarioAbierto = false;
+        this.sincronizarScrollBodyConModalUsuario();
         this.usuarioForm.reset({
           nombre: '',
           email: '',
@@ -406,9 +444,9 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
         this.configurarFormularioUsuarioParaCrear();
         this.refrescarDatos();
       },
-      error: () => {
+      error: (error) => {
         this.cargando = false;
-        this.mensajeError = 'No fue posible actualizar el usuario.';
+        this.mensajeError = this.obtenerMensajeErrorApi(error, 'No fue posible actualizar el usuario.');
       },
     });
   }
@@ -416,11 +454,15 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   private configurarFormularioUsuarioParaCrear(): void {
     this.usuarioForm.controls.password.setValidators([Validators.required, Validators.minLength(6)]);
     this.usuarioForm.controls.password.updateValueAndValidity({ emitEvent: false });
+    this.usuarioForm.controls.escuela.setValidators([Validators.required]);
+    this.usuarioForm.controls.escuela.updateValueAndValidity({ emitEvent: false });
   }
 
   private configurarFormularioUsuarioParaEditar(): void {
     this.usuarioForm.controls.password.setValidators([Validators.minLength(6)]);
     this.usuarioForm.controls.password.updateValueAndValidity({ emitEvent: false });
+    this.usuarioForm.controls.escuela.clearValidators();
+    this.usuarioForm.controls.escuela.updateValueAndValidity({ emitEvent: false });
   }
 
   editarReto(reto: RetoAdmin): void {
@@ -559,5 +601,33 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   private programarRenderGraficoAdmin(): void {
     setTimeout(() => this.renderizarGraficoAdmin(), 0);
+  }
+
+  private sincronizarScrollBodyConModalUsuario(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    document.body.style.overflow = this.modalEdicionUsuarioAbierto ? 'hidden' : '';
+  }
+
+  private restaurarScrollBody(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    document.body.style.overflow = '';
+  }
+
+  private obtenerMensajeErrorApi(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const backendMessage = error.error?.message;
+
+      if (typeof backendMessage === 'string' && backendMessage.trim().length > 0) {
+        return backendMessage;
+      }
+    }
+
+    return fallback;
   }
 }

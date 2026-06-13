@@ -30,3 +30,10 @@ main .brand-title {
     font-weight: 700 !important;
     letter-spacing: 0.01em;
 }
+
+button,
+a[class*='btn'] {
+    font-family: 'Avenir Next', 'Segoe UI', 'Trebuchet MS', sans-serif;
+    line-height: 1.25;
+    letter-spacing: 0.012em;
+}
