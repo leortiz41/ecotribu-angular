@@ -1,5 +1,5 @@
-import { NgFor, NgIf, NgOptimizedImage } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
 import { ActividadPerfilAlumno, MetricaPerfilAlumno, PerfilAlumnoService } from '../services/perfil-alumno.service';
 
@@ -12,6 +12,7 @@ import { ActividadPerfilAlumno, MetricaPerfilAlumno, PerfilAlumnoService } from 
 export class PerfilAlumnoComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly perfilAlumnoService = inject(PerfilAlumnoService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   sesion: UsuarioSesion | null = null;
   metricas: ReadonlyArray<MetricaPerfilAlumno> = [];
@@ -20,7 +21,13 @@ export class PerfilAlumnoComponent implements OnInit {
   mensajeError: string | null = null;
 
   ngOnInit(): void {
-    this.cargarReporte();
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarReporte();
+    } else {
+      this.cargando = false;
+      this.metricas = this.metricasPorDefecto();
+      this.actividades = this.actividadesPorDefecto();
+    }
   }
 
   cargarReporte(): void {

@@ -1,6 +1,6 @@
-import { NgIf, NgOptimizedImage } from '@angular/common';
+import { NgIf, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, PLATFORM_ID, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -15,6 +15,7 @@ export class IniciarSesionComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly sesionForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -48,9 +49,12 @@ export class IniciarSesionComponent {
           return;
         }
 
-        this.authService.guardarSesion(res.data);
+        if (!isPlatformBrowser(this.platformId)) {
+          return;
+        }
 
-        this.redireccionarPorRol(res.data.rol);
+        this.authService.guardarSesion(res.data);
+        void this.redireccionarPorRol(res.data.rol);
       },
       error: (err: HttpErrorResponse) => {
         this.cargando = false;
@@ -59,19 +63,36 @@ export class IniciarSesionComponent {
     });
   }
 
-  private redireccionarPorRol(rol: string): void {
-    switch (rol) {
+  private async redireccionarPorRol(rol: string): Promise<void> {
+    const rolNormalizado = String(rol || '').trim().toLowerCase();
+
+    let destino = '';
+
+    switch (rolNormalizado) {
       case 'alumno':
-        void this.router.navigate(['/perfil-alumno']);
-        return;
+      case 'estudiante':
+        destino = '/perfil-alumno';
+        break;
       case 'profesor':
-        void this.router.navigate(['/perfil-profesor']);
-        return;
+      case 'docente':
+        destino = '/perfil-profesor';
+        break;
       case 'administrador':
-        void this.router.navigate(['/perfil-administrador']);
-        return;
+      case 'admin':
+        destino = '/perfil-administrador';
+        break;
       default:
-        this.mensajeError = 'El rol de la cuenta no es válido para esta aplicación.';
+        this.mensajeError = `Rol no reconocido: "${rol}".`;
+        return;
+    }
+
+    try {
+      const navego = await this.router.navigateByUrl(destino, { replaceUrl: true });
+      if (!navego) {
+        window.location.assign(destino);
+      }
+    } catch {
+      window.location.assign(destino);
     }
   }
 }

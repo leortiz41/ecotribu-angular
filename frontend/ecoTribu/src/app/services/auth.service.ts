@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export interface CredencialesLogin {
@@ -46,6 +47,7 @@ export interface RespuestaApi<T> {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly sesionStorageKey = 'ecotribu.sesion';
   private readonly authApiUrl = 'http://localhost:3000/api/auth';
   private readonly usuariosApiUrl = 'http://localhost:3000/api/usuarios';
@@ -64,7 +66,7 @@ export class AuthService {
   }
 
   guardarSesion(usuario: UsuarioSesion): void {
-    if (typeof localStorage === 'undefined') {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
@@ -72,7 +74,7 @@ export class AuthService {
   }
 
   obtenerSesionGuardada(): UsuarioSesion | null {
-    if (typeof localStorage === 'undefined') {
+    if (!isPlatformBrowser(this.platformId)) {
       return null;
     }
 
@@ -89,7 +91,7 @@ export class AuthService {
   }
 
   cerrarSesionGuardada(): void {
-    if (typeof localStorage === 'undefined') {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 

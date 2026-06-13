@@ -1,11 +1,221 @@
-<main class="role-shell min-h-screen bg-[#ececec] px-6 py-10 sm:px-10">
-  <section class="mx-auto max-w-4xl rounded-3xl border border-cyan-300 bg-white/80 p-8 shadow-[0_14px_42px_rgba(15,23,42,0.12)]">
-    <div class="mb-4 flex items-center gap-3">
-      <img ngSrc="/img/EcoTribu.png" width="44" height="44" alt="EcoTribu" class="rounded-xl" priority />
-      <h1 class="text-3xl font-black text-emerald-700">Perfil Administrador</h1>
+<main class="admin-shell min-h-screen bg-[#ececec] text-slate-900">
+  <header class="bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+    <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+        </div>
+        <span class="brand-title text-2xl font-bold">EcoTribu</span>
+      </div>
+      <p class="text-base font-semibold tracking-wide sm:text-2xl">Panel Administrador</p>
     </div>
-    <p class="text-lg text-slate-700">
-      Esta vista ya está lista para conectarla con el diseño de administrador que me compartas después.
-    </p>
+  </header>
+
+  <section class="mx-auto w-full max-w-7xl px-6 py-8 sm:px-10 md:py-10">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-4xl font-black text-emerald-700 sm:text-6xl">Administración</h1>
+      <div class="session-chip rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-800 shadow-sm">
+        {{ sesion?.nombre || 'Administrador' }}
+      </div>
+    </div>
+
+    <div *ngIf="mensajeError" class="mb-5 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-red-800">
+      {{ mensajeError }}
+    </div>
+
+    <div *ngIf="mensajeAccion" class="mb-5 rounded-xl border border-blue-300 bg-blue-50 px-4 py-3 text-blue-800">
+      {{ mensajeAccion }}
+    </div>
+
+    <article class="toolbar-surface mb-6 rounded-[2rem] bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100 px-5 py-6 sm:px-8 sm:py-7">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-lg font-black text-emerald-700 sm:text-2xl">Panel de Control</p>
+          <p class="mt-1 text-sm text-emerald-700/80">Gestión centralizada de la plataforma</p>
+        </div>
+        <button type="button" class="btn-refresh rounded-2xl px-6 py-3 text-lg font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
+          {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+        </button>
+      </div>
+    </article>
+
+    <nav class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <button type="button" class="nav-card" [class.nav-card-active]="vistaActual === 'resumen'" (click)="cambiarVista('resumen')">
+        Resumen
+      </button>
+      <button type="button" class="nav-card" [class.nav-card-active]="vistaActual === 'escuelas'" (click)="cambiarVista('escuelas')">
+        Escuelas
+      </button>
+      <button type="button" class="nav-card" [class.nav-card-active]="vistaActual === 'usuarios'" (click)="cambiarVista('usuarios')">
+        Usuarios
+      </button>
+      <button type="button" class="nav-card" [class.nav-card-active]="vistaActual === 'contenido'" (click)="cambiarVista('contenido')">
+        Contenido
+      </button>
+    </nav>
+
+    <section *ngIf="vistaActual === 'resumen'">
+      <article class="stats-wrap mb-7 rounded-[1.35rem] bg-emerald-700 px-5 py-6 sm:px-7 sm:py-7">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+          <div *ngFor="let metrica of metricas" class="metric-card rounded-xl bg-white px-4 py-4 shadow-sm">
+            <p class="text-sm font-black text-slate-900 sm:text-base">{{ metrica.titulo }}</p>
+            <p class="metric-value mt-1 text-2xl font-black text-orange-500 sm:text-3xl">{{ metrica.valor }}</p>
+          </div>
+        </div>
+      </article>
+
+      <div class="grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <article class="panel-card">
+          <h2 class="panel-title text-emerald-700">Ultimas escuelas</h2>
+          <div *ngIf="escuelas.length === 0" class="empty-state">No hay escuelas registradas.</div>
+          <ul *ngIf="escuelas.length > 0" class="space-y-2">
+            <li *ngFor="let item of escuelas.slice(0, 5)" class="list-item">
+              <p class="font-bold text-slate-900">{{ item.nombre }}</p>
+              <p class="text-xs text-slate-600">{{ item.codigo }}</p>
+            </li>
+          </ul>
+        </article>
+
+        <article class="panel-card">
+          <h2 class="panel-title text-emerald-700">Distribucion de usuarios</h2>
+          <ul class="space-y-3">
+            <li class="list-item">
+              <div class="flex items-center justify-between">
+                <p class="font-bold text-slate-900">Total usuarios</p>
+                <p class="text-lg font-black text-emerald-700">{{ usuarios.length }}</p>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="flex items-center justify-between">
+                <p class="font-bold text-slate-900">Activos</p>
+                <p class="text-lg font-black text-green-700">{{ usuariosActivos }}</p>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="flex items-center justify-between">
+                <p class="font-bold text-slate-900">Profesores</p>
+                <p class="text-lg font-black text-purple-700">{{ profesoresActivos }}</p>
+              </div>
+            </li>
+            <li class="list-item">
+              <div class="flex items-center justify-between">
+                <p class="font-bold text-slate-900">Alumnos</p>
+                <p class="text-lg font-black text-teal-700">{{ alumnosActivos }}</p>
+              </div>
+            </li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section *ngIf="vistaActual === 'escuelas'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Crear escuela</h2>
+        <form [formGroup]="escuelaForm" (ngSubmit)="crearEscuela()" class="space-y-4">
+          <div>
+            <label class="field-label" for="escNombre">Nombre</label>
+            <input id="escNombre" class="field-input" formControlName="nombre" placeholder="Escuela Jose Marti" />
+          </div>
+          <div>
+            <label class="field-label" for="escCodigo">Codigo</label>
+            <input id="escCodigo" class="field-input" formControlName="codigo" placeholder="ESC-001" />
+          </div>
+          <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar escuela</button>
+        </form>
+      </article>
+
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Escuelas registradas</h2>
+        <div *ngIf="escuelas.length === 0" class="empty-state">No hay escuelas registradas.</div>
+        <div *ngIf="escuelas.length > 0" class="space-y-2">
+          <div *ngFor="let esc of escuelas" class="list-item">
+            <p class="font-bold text-slate-900">{{ esc.nombre }}</p>
+            <p class="text-xs text-slate-600">{{ esc.codigo }}</p>
+            <p *ngIf="esc.activa" class="text-xs font-semibold text-green-700">
+              Activa
+            </p>
+            <p *ngIf="!esc.activa" class="text-xs font-semibold text-red-700">
+              Inactiva
+            </p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'usuarios'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Crear usuario</h2>
+        <form [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="space-y-4">
+          <div>
+            <label class="field-label" for="usrNombre">Nombre</label>
+            <input id="usrNombre" class="field-input" formControlName="nombre" placeholder="Juan Perez" />
+          </div>
+          <div>
+            <label class="field-label" for="usrEmail">Email</label>
+            <input id="usrEmail" type="email" class="field-input" formControlName="email" placeholder="usuario@escuela.hn" />
+          </div>
+          <div>
+            <label class="field-label" for="usrPassword">Contraseña</label>
+            <input id="usrPassword" type="password" class="field-input" formControlName="password" />
+          </div>
+          <div>
+            <label class="field-label" for="usrRol">Rol</label>
+            <select id="usrRol" class="field-input" formControlName="rol">
+              <option value="alumno">Alumno</option>
+              <option value="profesor">Profesor</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="usrEscuela">Escuela</label>
+            <select id="usrEscuela" class="field-input" formControlName="escuela">
+              <option value="">Selecciona escuela</option>
+              <option *ngFor="let esc of escuelas" [value]="esc._id">{{ esc.nombre }}</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar usuario</button>
+        </form>
+      </article>
+
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Usuarios del sistema</h2>
+        <div *ngIf="usuarios.length === 0" class="empty-state">No hay usuarios registrados.</div>
+        <div *ngIf="usuarios.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+          <div *ngFor="let usr of usuarios.slice(0, 10)" class="list-item">
+            <p class="font-bold text-slate-900">{{ usr.nombre }}</p>
+            <p class="text-xs text-slate-600">{{ usr.email }}</p>
+            <p class="text-xs font-semibold text-emerald-700">{{ usr.rol }}</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'contenido'">
+      <div class="grid gap-6 lg:grid-cols-2">
+        <article class="panel-card">
+          <h2 class="panel-title text-emerald-700">Retos publicados</h2>
+          <div *ngIf="retosPublicados.length === 0" class="empty-state">No hay retos publicados.</div>
+          <div *ngIf="retosPublicados.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+            <div *ngFor="let reto of retosPublicados.slice(0, 10)" class="list-item">
+              <p class="font-bold text-slate-900">{{ reto.titulo }}</p>
+              <p class="text-xs text-slate-600">{{ reto.escuela.nombre }}</p>
+              <p class="text-xs font-semibold text-emerald-700">{{ reto.estado }}</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <h2 class="panel-title text-emerald-700">Cuestionarios en sistema</h2>
+          <div *ngIf="cuestionariosActivos.length === 0" class="empty-state">No hay cuestionarios en el sistema.</div>
+          <div *ngIf="cuestionariosActivos.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+            <div *ngFor="let quiz of cuestionariosActivos" class="list-item">
+              <p class="font-bold text-slate-900">{{ quiz.titulo }}</p>
+              <p class="text-xs text-slate-600">{{ quiz.escuela.nombre }}</p>
+              <p class="text-xs font-semibold text-emerald-700">{{ quiz.estado }}</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </section>
 </main>
