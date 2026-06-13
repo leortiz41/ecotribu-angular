@@ -25,6 +25,10 @@ const retoSchema = new mongoose.Schema(
       trim: true,
       minlength: [10, 'La descripcion debe tener al menos 10 caracteres.'],
     },
+    grado: {
+      type: String,
+      trim: true,
+    },
     instrucciones: {
       type: String,
       trim: true,

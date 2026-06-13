@@ -31,6 +31,10 @@ const usuarioSchema = new mongoose.Schema(
       ref: 'Escuela',
       required: [true, 'La escuela asociada es obligatoria.'],
     },
+    grado: {
+      type: String,
+      trim: true,
+    },
     puntos: {
       type: Number,
       default: 0,

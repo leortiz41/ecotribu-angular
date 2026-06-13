@@ -79,6 +79,10 @@ const obtenerUsuarios = async (req, res) => {
       filtro.escuela = req.query.escuela;
     }
 
+    if (req.query.grado) {
+      filtro.grado = String(req.query.grado).trim();
+    }
+
     const usuarios = await Usuario.find(filtro)
       .populate('escuela', 'nombre codigo')
       .sort({ createdAt: -1 });
@@ -134,7 +138,7 @@ const actualizarUsuario = async (req, res) => {
       });
     }
 
-    const camposPermitidos = ['nombre', 'email', 'password', 'rol', 'escuela', 'puntos', 'activo'];
+    const camposPermitidos = ['nombre', 'email', 'password', 'rol', 'escuela', 'grado', 'puntos', 'activo'];
     const camposRecibidos = Object.keys(req.body);
     const hayCampoInvalido = camposRecibidos.some((campo) => !camposPermitidos.includes(campo));
 

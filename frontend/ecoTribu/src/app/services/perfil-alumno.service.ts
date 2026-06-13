@@ -11,8 +11,38 @@ interface EvidenciaRelacionReto {
 interface EvidenciaAlumno {
   _id: string;
   estado: 'pendiente' | 'aprobada' | 'rechazada';
-  reto?: EvidenciaRelacionReto;
+  reto?: EvidenciaRelacionReto | string;
   createdAt: string;
+}
+
+interface RetoRelacionCreador {
+  _id: string;
+  nombre: string;
+}
+
+interface RetoDisponibleApi {
+  _id: string;
+  titulo: string;
+  descripcion?: string;
+  puntos?: number;
+  fechaFin?: string;
+  creador?: RetoRelacionCreador;
+}
+
+interface CuestionarioRelacionadoAlumno {
+  _id: string;
+  nombre: string;
+}
+
+interface CuestionarioDisponibleApi {
+  _id: string;
+  titulo: string;
+  descripcion?: string;
+  grado?: string;
+  modalidad?: string;
+  estado: 'borrador' | 'publicado' | 'cerrado';
+  preguntas?: unknown[];
+  creador?: CuestionarioRelacionadoAlumno;
 }
 
 interface CuestionarioRelacionado {
@@ -44,11 +74,33 @@ export interface ReportePerfilAlumno {
   actividades: ActividadPerfilAlumno[];
 }
 
+export interface RetoDisponibleAlumno {
+  _id: string;
+  titulo: string;
+  descripcion?: string;
+  puntos: number;
+  fechaFin?: string;
+  creadorNombre: string;
+  estadoAlumno: 'sin_entregar' | 'pendiente' | 'aprobada' | 'rechazada';
+}
+
+export interface CuestionarioDisponibleAlumno {
+  _id: string;
+  titulo: string;
+  descripcion?: string;
+  grado?: string;
+  modalidad?: string;
+  creadorNombre: string;
+  preguntasCantidad: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PerfilAlumnoService {
   private readonly http = inject(HttpClient);
   private readonly evidenciasApiUrl = 'http://localhost:3000/api/evidencias';
+  private readonly cuestionariosApiUrl = 'http://localhost:3000/api/cuestionarios';
   private readonly resultadosApiUrl = 'http://localhost:3000/api/resultados-cuestionarios';
+  private readonly retosApiUrl = 'http://localhost:3000/api/retos';
 
   obtenerReporte(alumnoId: string): Observable<ReportePerfilAlumno> {
     return forkJoin({
@@ -56,6 +108,77 @@ export class PerfilAlumnoService {
       resultados: this.obtenerResultadosAlumno(alumnoId),
     }).pipe(
       map(({ evidencias, resultados }) => this.construirReporte(evidencias, resultados))
+    );
+  }
+
+  obtenerRetosDisponibles(alumnoId: string, escuelaId: string, grado?: string): Observable<RetoDisponibleAlumno[]> {
+    return forkJoin({
+      retos: this.obtenerRetosPublicadosEscuela(escuelaId, grado),
+      evidencias: this.obtenerEvidenciasAlumno(alumnoId),
+    }).pipe(
+      map(({ retos, evidencias }) => {
+        const estadoPorReto = new Map<string, RetoDisponibleAlumno['estadoAlumno']>();
+
+        evidencias.forEach((item) => {
+          const retoId = this.extraerRetoId(item.reto);
+          if (!retoId) {
+            return;
+          }
+          estadoPorReto.set(retoId, item.estado);
+        });
+
+        return retos.map((reto) => ({
+          _id: reto._id,
+          titulo: reto.titulo,
+          descripcion: reto.descripcion,
+          puntos: Number(reto.puntos ?? 0),
+          fechaFin: reto.fechaFin,
+          creadorNombre: reto.creador?.nombre ?? 'Docente',
+          estadoAlumno: estadoPorReto.get(reto._id) ?? 'sin_entregar',
+        }));
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  obtenerCuestionariosDisponibles(
+    escuelaId: string,
+    grado?: string
+  ): Observable<CuestionarioDisponibleAlumno[]> {
+    return this.obtenerCuestionariosPublicadosEscuela(escuelaId, grado).pipe(
+      map((cuestionarios) =>
+        cuestionarios.map((cuestionario) => ({
+          _id: cuestionario._id,
+          titulo: cuestionario.titulo,
+          descripcion: cuestionario.descripcion,
+          grado: cuestionario.grado,
+          modalidad: cuestionario.modalidad,
+          creadorNombre: cuestionario.creador?.nombre ?? 'Docente',
+          preguntasCantidad: Array.isArray(cuestionario.preguntas) ? cuestionario.preguntas.length : 0,
+        }))
+      ),
+      catchError(() => of([]))
+    );
+  }
+
+  private obtenerRetosPublicadosEscuela(escuelaId: string, grado?: string): Observable<RetoDisponibleApi[]> {
+    const gradoParam = grado ? `&grado=${encodeURIComponent(grado)}` : '';
+    const query = `${this.retosApiUrl}?escuela=${escuelaId}&estado=publicado${gradoParam}`;
+    return this.http.get<RespuestaApi<RetoDisponibleApi[]>>(query).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
+  }
+
+  private obtenerCuestionariosPublicadosEscuela(
+    escuelaId: string,
+    grado?: string
+  ): Observable<CuestionarioDisponibleApi[]> {
+    const gradoParam = grado ? `&grado=${encodeURIComponent(grado)}` : '';
+    const query = `${this.cuestionariosApiUrl}?escuela=${escuelaId}&estado=publicado${gradoParam}`;
+    return this.http.get<RespuestaApi<CuestionarioDisponibleApi[]>>(query).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
     );
   }
 
@@ -140,7 +263,7 @@ export class PerfilAlumnoService {
     }
 
     const actividadesDesdeEvidencias = evidencias.slice(0, 5).map((item, index) => ({
-      nombre: item.reto?.titulo || `Actividad ${index + 1}`,
+      nombre: this.extraerTituloReto(item.reto) || `Actividad ${index + 1}`,
       porcentaje: this.porcentajePorEstado(item.estado),
     }));
 
@@ -184,5 +307,25 @@ export class PerfilAlumnoService {
       default:
         return 0;
     }
+  }
+
+  private extraerRetoId(reto?: EvidenciaRelacionReto | string): string {
+    if (!reto) {
+      return '';
+    }
+
+    if (typeof reto === 'string') {
+      return reto;
+    }
+
+    return reto._id;
+  }
+
+  private extraerTituloReto(reto?: EvidenciaRelacionReto | string): string {
+    if (!reto || typeof reto === 'string') {
+      return '';
+    }
+
+    return reto.titulo;
   }
 }

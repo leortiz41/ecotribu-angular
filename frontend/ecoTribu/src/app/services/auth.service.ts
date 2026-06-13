@@ -14,6 +14,7 @@ export interface UsuarioSesion {
   email: string;
   rol: 'alumno' | 'profesor' | 'administrador';
   escuela: { _id: string; nombre: string; codigo: string };
+  grado?: string;
   puntos: number;
   activo: boolean;
 }
@@ -30,6 +31,7 @@ export interface DatosRegistroUsuario {
   password: string;
   rol: 'alumno' | 'profesor' | 'administrador';
   escuela: string;
+  grado?: string;
 }
 
 export interface EscuelaCatalogo {

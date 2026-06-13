@@ -149,6 +149,11 @@ const obtenerRetos = async (req, res) => {
       filtro.creador = req.query.creador;
     }
 
+    if (req.query.grado) {
+      const grado = String(req.query.grado).trim();
+      filtro.$or = [{ grado }, { grado: { $exists: false } }, { grado: '' }, { grado: null }];
+    }
+
     const retos = await Reto.find(filtro)
       .populate('escuela', 'nombre codigo')
       .populate('creador', 'nombre email rol')
@@ -210,6 +215,7 @@ const actualizarReto = async (req, res) => {
     const camposPermitidos = [
       'titulo',
       'descripcion',
+      'grado',
       'instrucciones',
       'categoria',
       'dificultad',

@@ -7,16 +7,31 @@ export interface RetoProfesor {
   _id: string;
   titulo: string;
   descripcion?: string;
+  grado?: string;
   estado: 'borrador' | 'publicado' | 'cerrado';
+  puntos?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
   createdAt: string;
+}
+
+export interface PreguntaCuestionarioProfesor {
+  enunciado: string;
+  tipo: 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  opciones?: string[];
+  respuestaCorrecta: number | number[] | string;
+  puntaje: number;
 }
 
 export interface CuestionarioProfesor {
   _id: string;
   titulo: string;
+  descripcion?: string;
+  grado?: string;
   modalidad?: string;
   estado: 'borrador' | 'publicado' | 'cerrado';
   activo: boolean;
+  preguntas?: PreguntaCuestionarioProfesor[];
 }
 
 interface EvidenciaProfesor {
@@ -50,6 +65,7 @@ export interface AlumnoEscuelaProfesor {
 export interface CrearRetoPayload {
   titulo: string;
   descripcion: string;
+  grado?: string;
   instrucciones?: string;
   categoria?: string;
   dificultad?: string;
@@ -58,6 +74,7 @@ export interface CrearRetoPayload {
   fechaFin: string;
   escuela: string;
   creador: string;
+  estado?: 'borrador' | 'publicado' | 'cerrado';
 }
 
 export interface PreguntaCuestionarioPayload {
@@ -78,6 +95,40 @@ export interface CrearCuestionarioPayload {
   preguntas: PreguntaCuestionarioPayload[];
 }
 
+export interface ActualizarRetoPayload {
+  titulo?: string;
+  descripcion?: string;
+  grado?: string;
+  puntos?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
+}
+
+export interface ActualizarCuestionarioPayload {
+  titulo?: string;
+  descripcion?: string;
+  grado?: string;
+  modalidad?: 'mixto' | 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  preguntas?: PreguntaCuestionarioPayload[];
+}
+
+export interface EvidenciaResumenProfesor {
+  _id: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  reto: string | { _id: string };
+  alumno: string | { _id: string };
+  activo: boolean;
+}
+
+export interface ResultadoCuestionarioResumenProfesor {
+  _id: string;
+  cuestionario: string | { _id: string };
+  alumno: string | { _id: string };
+  porcentaje: number;
+  aprobado: boolean;
+  activo: boolean;
+}
+
 export interface ReportePerfilProfesor {
   metricas: MetricaPerfilProfesor[];
   actividades: ActividadPerfilProfesor[];
@@ -90,6 +141,7 @@ export class PerfilProfesorService {
   private readonly retosApiUrl = 'http://localhost:3000/api/retos';
   private readonly cuestionariosApiUrl = 'http://localhost:3000/api/cuestionarios';
   private readonly evidenciasApiUrl = 'http://localhost:3000/api/evidencias';
+  private readonly resultadosCuestionariosApiUrl = 'http://localhost:3000/api/resultados-cuestionarios';
   private readonly usuariosApiUrl = 'http://localhost:3000/api/usuarios';
 
   obtenerReporte(profesorId: string): Observable<ReportePerfilProfesor> {
@@ -134,8 +186,47 @@ export class PerfilProfesorService {
     return this.http.post<RespuestaApi<RetoProfesor>>(this.retosApiUrl, payload);
   }
 
+  publicarReto(retoId: string): Observable<RespuestaApi<RetoProfesor>> {
+    return this.http.patch<RespuestaApi<RetoProfesor>>(`${this.retosApiUrl}/${retoId}/publicar`, {});
+  }
+
   crearCuestionario(payload: CrearCuestionarioPayload): Observable<RespuestaApi<CuestionarioProfesor>> {
     return this.http.post<RespuestaApi<CuestionarioProfesor>>(this.cuestionariosApiUrl, payload);
+  }
+
+  actualizarReto(retoId: string, payload: ActualizarRetoPayload): Observable<RespuestaApi<RetoProfesor>> {
+    return this.http.put<RespuestaApi<RetoProfesor>>(`${this.retosApiUrl}/${retoId}`, payload);
+  }
+
+  eliminarReto(retoId: string): Observable<RespuestaApi<RetoProfesor>> {
+    return this.http.delete<RespuestaApi<RetoProfesor>>(`${this.retosApiUrl}/${retoId}`);
+  }
+
+  actualizarCuestionario(
+    cuestionarioId: string,
+    payload: ActualizarCuestionarioPayload
+  ): Observable<RespuestaApi<CuestionarioProfesor>> {
+    return this.http.put<RespuestaApi<CuestionarioProfesor>>(`${this.cuestionariosApiUrl}/${cuestionarioId}`, payload);
+  }
+
+  eliminarCuestionario(cuestionarioId: string): Observable<RespuestaApi<CuestionarioProfesor>> {
+    return this.http.delete<RespuestaApi<CuestionarioProfesor>>(`${this.cuestionariosApiUrl}/${cuestionarioId}`);
+  }
+
+  obtenerEvidenciasEscuela(): Observable<EvidenciaResumenProfesor[]> {
+    const query = `${this.evidenciasApiUrl}?incluirInactivas=true`;
+    return this.http.get<RespuestaApi<EvidenciaResumenProfesor[]>>(query).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
+  }
+
+  obtenerResultadosCuestionariosEscuela(escuelaId: string): Observable<ResultadoCuestionarioResumenProfesor[]> {
+    const query = `${this.resultadosCuestionariosApiUrl}?escuela=${escuelaId}&incluirInactivos=true`;
+    return this.http.get<RespuestaApi<ResultadoCuestionarioResumenProfesor[]>>(query).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
   }
 
   private obtenerRetosPorEstado(profesorId: string, estado: RetoProfesor['estado']): Observable<RetoProfesor[]> {

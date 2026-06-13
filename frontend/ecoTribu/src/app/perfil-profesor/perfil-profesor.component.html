@@ -67,14 +67,8 @@
       <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <article class="chart-surface rounded-[2rem] bg-gradient-to-br from-cyan-100 via-cyan-50 to-amber-100 px-5 py-7 sm:px-8 sm:py-8">
           <h2 class="mb-6 text-2xl font-black text-slate-900 sm:text-4xl">Indicadores Operativos</h2>
-
-          <div class="mx-auto grid max-w-4xl grid-cols-5 items-end gap-4 border-b border-emerald-200/80 pt-2 sm:gap-7">
-            <div *ngFor="let actividad of actividades" class="flex flex-col items-center">
-              <div class="bar-track flex h-52 w-full items-end rounded-md p-1 sm:h-56">
-                <div class="bar-fill w-full rounded-xs bg-emerald-700" [style.height.%]="actividad.porcentaje"></div>
-              </div>
-              <p class="mt-3 text-center text-xs font-black text-slate-900 sm:text-base">{{ actividad.nombre }}</p>
-            </div>
+          <div class="relative h-80 rounded-[1.5rem] bg-white/70 p-4 shadow-inner sm:h-[26rem]">
+            <canvas #profesorChart aria-label="Gráfico de indicadores del profesor" role="img"></canvas>
           </div>
         </article>
 
@@ -93,11 +87,44 @@
           </ul>
         </article>
       </div>
+
+      <article class="panel-card mt-6">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="panel-title mb-0">Resultados de alumnos</h2>
+          <button type="button" class="btn-outline" (click)="cargarReporte()" [disabled]="cargando">Actualizar resultados</button>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div class="list-item">
+            <p class="text-xs font-semibold text-slate-600">Entregas de retos</p>
+            <p class="text-2xl font-black text-emerald-700">{{ resultadosRetosTomados }}</p>
+          </div>
+          <div class="list-item">
+            <p class="text-xs font-semibold text-slate-600">Retos aprobados</p>
+            <p class="text-2xl font-black text-emerald-700">{{ resultadosRetosAprobados }}</p>
+          </div>
+          <div class="list-item">
+            <p class="text-xs font-semibold text-slate-600">Intentos en cuestionarios</p>
+            <p class="text-2xl font-black text-emerald-700">{{ resultadosCuestionariosIntentos }}</p>
+          </div>
+          <div class="list-item">
+            <p class="text-xs font-semibold text-slate-600">Promedio cuestionarios</p>
+            <p class="text-2xl font-black text-emerald-700">{{ resultadosCuestionariosPromedio }}%</p>
+          </div>
+          <div class="list-item">
+            <p class="text-xs font-semibold text-slate-600">Alumnos con actividad</p>
+            <p class="text-2xl font-black text-emerald-700">{{ resultadosAlumnosParticipantes }}</p>
+          </div>
+        </div>
+      </article>
     </section>
 
     <section *ngIf="vistaActual === 'retos'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
       <article class="panel-card">
-        <h2 class="panel-title">Crear nuevo reto</h2>
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="panel-title mb-0">{{ retoEnEdicionId ? 'Editar reto' : 'Crear nuevo reto' }}</h2>
+          <button type="button" class="btn-outline" (click)="irAResumenResultados()">Ver resultados</button>
+        </div>
         <form [formGroup]="retoForm" (ngSubmit)="crearReto()" class="space-y-4">
           <div>
             <label class="field-label" for="retoTitulo">Titulo</label>
@@ -106,6 +133,10 @@
           <div>
             <label class="field-label" for="retoDescripcion">Descripcion</label>
             <textarea id="retoDescripcion" class="field-input" formControlName="descripcion" rows="3" placeholder="Describe el objetivo del reto"></textarea>
+          </div>
+          <div>
+            <label class="field-label" for="retoGrado">Clase/Grado objetivo (opcional)</label>
+            <input id="retoGrado" class="field-input" formControlName="grado" placeholder="Ejemplo: 7mo" />
           </div>
           <div class="grid gap-3 sm:grid-cols-3">
             <div>
@@ -121,7 +152,14 @@
               <input id="retoFin" type="date" class="field-input" formControlName="fechaFin" />
             </div>
           </div>
-          <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar reto</button>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">
+              {{ retoEnEdicionId ? 'Actualizar reto' : 'Guardar reto' }}
+            </button>
+            <button *ngIf="retoEnEdicionId" type="button" class="btn-action-edit" (click)="cancelarEdicionReto()">
+              Cancelar edición
+            </button>
+          </div>
         </form>
       </article>
 
@@ -132,6 +170,11 @@
           <li *ngFor="let item of retosProfesor" class="list-item">
             <p class="font-bold text-slate-900">{{ item.titulo }}</p>
             <p class="text-sm font-semibold text-emerald-700">{{ item.estado }}</p>
+            <div class="mt-3 flex gap-2">
+              <button *ngIf="item.estado === 'borrador'" type="button" class="btn-action-edit" (click)="publicarReto(item)">Publicar</button>
+              <button type="button" class="btn-action-edit" (click)="editarReto(item)">Editar</button>
+              <button type="button" class="btn-action-delete" (click)="eliminarReto(item)">Eliminar</button>
+            </div>
           </li>
         </ul>
       </article>
@@ -139,7 +182,10 @@
 
     <section *ngIf="vistaActual === 'cuestionarios'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
       <article class="panel-card">
-        <h2 class="panel-title">Crear cuestionario</h2>
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="panel-title mb-0">{{ cuestionarioEnEdicionId ? 'Editar cuestionario' : 'Crear cuestionario' }}</h2>
+          <button type="button" class="btn-outline" (click)="irAResumenResultados()">Ver resultados</button>
+        </div>
         <form [formGroup]="cuestionarioForm" (ngSubmit)="crearCuestionario()" class="space-y-4">
           <div>
             <label class="field-label" for="quizTitulo">Titulo</label>
@@ -173,7 +219,14 @@
               <input id="quizPuntaje" type="number" class="field-input" formControlName="puntaje" />
             </div>
           </div>
-          <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar cuestionario</button>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">
+              {{ cuestionarioEnEdicionId ? 'Actualizar cuestionario' : 'Guardar cuestionario' }}
+            </button>
+            <button *ngIf="cuestionarioEnEdicionId" type="button" class="btn-action-edit" (click)="cancelarEdicionCuestionario()">
+              Cancelar edición
+            </button>
+          </div>
         </form>
       </article>
 
@@ -184,6 +237,10 @@
           <li *ngFor="let item of cuestionariosProfesor" class="list-item">
             <p class="font-bold text-slate-900">{{ item.titulo }}</p>
             <p class="text-sm font-semibold text-emerald-700">{{ item.estado }}</p>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="btn-action-edit" (click)="editarCuestionario(item)">Editar</button>
+              <button type="button" class="btn-action-delete" (click)="eliminarCuestionario(item)">Eliminar</button>
+            </div>
           </li>
         </ul>
       </article>

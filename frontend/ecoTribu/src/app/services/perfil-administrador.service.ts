@@ -15,7 +15,9 @@ export interface UsuarioAdmin {
   nombre: string;
   email: string;
   rol: 'alumno' | 'profesor' | 'administrador';
+  grado?: string;
   activo: boolean;
+  escuela?: { _id: string; nombre: string; codigo?: string };
 }
 
 export interface RetoAdmin {
@@ -49,6 +51,37 @@ export interface CrearUsuarioAdminPayload {
   password: string;
   rol: 'alumno' | 'profesor' | 'administrador';
   escuela: string;
+  grado?: string;
+}
+
+export interface ActualizarEscuelaPayload {
+  nombre?: string;
+  codigo?: string;
+  activa?: boolean;
+}
+
+export interface ActualizarUsuarioAdminPayload {
+  nombre?: string;
+  email?: string;
+  password?: string;
+  rol?: 'alumno' | 'profesor' | 'administrador';
+  escuela?: string;
+  grado?: string;
+  activo?: boolean;
+}
+
+export interface ActualizarRetoAdminPayload {
+  titulo?: string;
+  descripcion?: string;
+  estado?: 'borrador' | 'publicado' | 'cerrado';
+  activo?: boolean;
+}
+
+export interface ActualizarCuestionarioAdminPayload {
+  titulo?: string;
+  descripcion?: string;
+  estado?: 'borrador' | 'publicado' | 'cerrado';
+  activo?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -151,5 +184,37 @@ export class PerfilAdministradorService {
 
   crearUsuario(payload: CrearUsuarioAdminPayload): Observable<RespuestaApi<UsuarioAdmin>> {
     return this.http.post<RespuestaApi<UsuarioAdmin>>(this.usuariosApiUrl, payload);
+  }
+
+  actualizarEscuela(id: string, payload: ActualizarEscuelaPayload): Observable<RespuestaApi<EscuelaAdmin>> {
+    return this.http.put<RespuestaApi<EscuelaAdmin>>(`${this.escuelasApiUrl}/${id}`, payload);
+  }
+
+  eliminarEscuela(id: string): Observable<RespuestaApi<EscuelaAdmin>> {
+    return this.http.delete<RespuestaApi<EscuelaAdmin>>(`${this.escuelasApiUrl}/${id}`);
+  }
+
+  actualizarUsuario(id: string, payload: ActualizarUsuarioAdminPayload): Observable<RespuestaApi<UsuarioAdmin>> {
+    return this.http.put<RespuestaApi<UsuarioAdmin>>(`${this.usuariosApiUrl}/${id}`, payload);
+  }
+
+  eliminarUsuario(id: string): Observable<RespuestaApi<UsuarioAdmin>> {
+    return this.http.delete<RespuestaApi<UsuarioAdmin>>(`${this.usuariosApiUrl}/${id}`);
+  }
+
+  actualizarReto(id: string, payload: ActualizarRetoAdminPayload): Observable<RespuestaApi<RetoAdmin>> {
+    return this.http.put<RespuestaApi<RetoAdmin>>(`${this.retosApiUrl}/${id}`, payload);
+  }
+
+  eliminarReto(id: string): Observable<RespuestaApi<RetoAdmin>> {
+    return this.http.delete<RespuestaApi<RetoAdmin>>(`${this.retosApiUrl}/${id}`);
+  }
+
+  actualizarCuestionario(id: string, payload: ActualizarCuestionarioAdminPayload): Observable<RespuestaApi<CuestionarioAdmin>> {
+    return this.http.put<RespuestaApi<CuestionarioAdmin>>(`${this.cuestionariosApiUrl}/${id}`, payload);
+  }
+
+  eliminarCuestionario(id: string): Observable<RespuestaApi<CuestionarioAdmin>> {
+    return this.http.delete<RespuestaApi<CuestionarioAdmin>>(`${this.cuestionariosApiUrl}/${id}`);
   }
 }
