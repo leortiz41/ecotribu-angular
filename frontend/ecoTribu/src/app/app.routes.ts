@@ -10,10 +10,10 @@ import { RegistroComponent } from './registro/registro.component';
 export const routes: Routes = [
 	{ path: '', component: LoginComponent },
 	{ path: 'iniciar-sesion', component: IniciarSesionComponent },
-	{ path: 'register', component: RegistroComponent },
+	{ path: 'registro', component: RegistroComponent },
 	{ path: 'perfil-alumno', component: PerfilAlumnoComponent },
 	{ path: 'perfil-profesor', component: PerfilProfesorComponent },
 	{ path: 'perfil-administrador', component: PerfilAdministradorComponent },
-	{ path: 'educativo', component: EscuelaComponent },
+	{ path: 'escuela', component: EscuelaComponent },
 	{ path: '**', redirectTo: '' },
 ];

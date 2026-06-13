@@ -1,13 +1,37 @@
 <main class="admin-shell min-h-screen bg-[#ececec] text-slate-900">
   <header class="bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
-    <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
+    <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div class="flex items-center gap-3">
         <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
           <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
         </div>
         <span class="brand-title text-2xl font-bold">EcoTribu</span>
       </div>
-      <p class="text-base font-semibold tracking-wide sm:text-2xl">Panel Administrador</p>
+
+      <div class="w-full lg:w-auto">
+        <p class="mb-1 text-left text-base font-semibold tracking-wide sm:text-xl lg:text-right">Panel Administrador</p>
+        <p class="mb-3 text-left text-xs text-emerald-50/90 lg:text-right">Accesos rápidos de gestión</p>
+        <nav class="header-nav-grid" aria-label="Gestiones principales">
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'escuelas'" (click)="navegarGestionSuperior('escuelas')">
+            Escuelas
+          </button>
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'profesores'" (click)="navegarGestionSuperior('profesores')">
+            Profesores
+          </button>
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'alumnos'" (click)="navegarGestionSuperior('alumnos')">
+            Alumnos
+          </button>
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'ranking'" (click)="navegarGestionSuperior('ranking')">
+            Ranking
+          </button>
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'encuestas'" (click)="navegarGestionSuperior('encuestas')">
+            Encuestas
+          </button>
+          <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'evidencias'" (click)="navegarGestionSuperior('evidencias')">
+            Evidencias
+          </button>
+        </nav>
+      </div>
     </div>
   </header>
 
@@ -122,7 +146,10 @@
 
     <section *ngIf="vistaActual === 'escuelas'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
       <article class="panel-card">
-        <h2 class="panel-title text-emerald-700">Crear escuela</h2>
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 class="panel-title mb-0 text-emerald-700">Crear escuela</h2>
+          <a routerLink="/escuela" class="btn-action-edit">Ir al componente Escuela</a>
+        </div>
         <form [formGroup]="escuelaForm" (ngSubmit)="crearEscuela()" class="space-y-4">
           <div>
             <label class="field-label" for="escNombre">Nombre</label>
@@ -132,6 +159,10 @@
             <label class="field-label" for="escCodigo">Codigo</label>
             <input id="escCodigo" class="field-input" formControlName="codigo" placeholder="ESC-001" />
           </div>
+          <label class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+            <input type="checkbox" formControlName="activa" />
+            Escuela activa
+          </label>
           <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar escuela</button>
         </form>
       </article>
@@ -139,8 +170,8 @@
       <article class="panel-card">
         <h2 class="panel-title text-emerald-700">Escuelas registradas</h2>
         <div *ngIf="escuelas.length === 0" class="empty-state">No hay escuelas registradas.</div>
-        <div *ngIf="escuelas.length > 0" class="space-y-2">
-          <div *ngFor="let esc of escuelas" class="list-item">
+        <ul *ngIf="escuelas.length > 0" class="space-y-2 pl-0 m-0 list-none">
+          <li *ngFor="let esc of escuelas" class="list-item">
             <p class="font-bold text-slate-900">{{ esc.nombre }}</p>
             <p class="text-xs text-slate-600">{{ esc.codigo }}</p>
             <p *ngIf="esc.activa" class="text-xs font-semibold text-green-700">
@@ -150,23 +181,53 @@
               Inactiva
             </p>
             <div class="mt-3 flex gap-2">
-              <button type="button" class="btn-action-edit" (click)="editarEscuela(esc)">Editar</button>
-              <button type="button" class="btn-action-delete" (click)="eliminarEscuela(esc)">Eliminar</button>
+              <a class="btn-action-edit" [routerLink]="['/escuela']" [queryParams]="{ edit: esc._id }">Editar</a>
+              <button type="button" class="btn-action-delete" (click)="toggleEstadoEscuela(esc)">
+                {{ esc.activa ? 'Desactivar' : 'Activar nuevamente' }}
+              </button>
             </div>
-          </div>
-        </div>
+          </li>
+        </ul>
       </article>
     </section>
 
-    <section *ngIf="vistaActual === 'usuarios'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
-      <article class="panel-card">
-        <h2 class="panel-title text-emerald-700">{{ usuarioEnEdicionId ? 'Editar usuario' : 'Crear usuario' }}</h2>
-
-        <div *ngIf="usuarioEnEdicionId" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Estás editando un usuario. Puedes actualizar nombre, email, rol, escuela y contraseña.
+    <div *ngIf="modalEdicionEscuelaAbierto && escuelaEnEdicionId" class="modal-backdrop" (click)="cerrarModalEdicionEscuela()">
+      <article class="modal-card" (click)="$event.stopPropagation()">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-emerald-700">Editar escuela</h3>
+            <p class="text-xs text-slate-600">Actualiza los datos de la escuela seleccionada.</p>
+          </div>
+          <button type="button" class="btn-action-delete" (click)="cerrarModalEdicionEscuela()">Cerrar</button>
         </div>
 
-        <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-4">
+        <form [formGroup]="escuelaEdicionForm" (ngSubmit)="actualizarEscuelaDesdeFormulario()" class="space-y-4">
+          <div>
+            <label class="field-label" for="modalEscNombre">Nombre</label>
+            <input id="modalEscNombre" class="field-input" formControlName="nombre" />
+          </div>
+          <div>
+            <label class="field-label" for="modalEscCodigo">Codigo</label>
+            <input id="modalEscCodigo" class="field-input" formControlName="codigo" />
+          </div>
+          <label class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+            <input type="checkbox" formControlName="activa" />
+            Escuela activa
+          </label>
+
+          <div class="flex flex-wrap justify-end gap-2 pt-1">
+            <button type="button" class="btn-action-edit" (click)="cerrarModalEdicionEscuela()">Cancelar</button>
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Actualizar escuela</button>
+          </div>
+        </form>
+      </article>
+    </div>
+
+    <section *ngIf="vistaActual === 'usuarios'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Crear usuario</h2>
+
+        <form [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="space-y-4">
           <div>
             <label class="field-label" for="usrNombre">Nombre</label>
             <input id="usrNombre" class="field-input" formControlName="nombre" placeholder="Juan Perez" />
@@ -200,17 +261,7 @@
             <input id="usrGrado" class="field-input" formControlName="grado" placeholder="Ejemplo: 7mo" />
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">
-              {{ usuarioEnEdicionId ? 'Actualizar usuario' : 'Guardar usuario' }}
-            </button>
-            <button
-              *ngIf="usuarioEnEdicionId"
-              type="button"
-              class="btn-action-edit"
-              (click)="cancelarEdicionUsuario()"
-            >
-              Cancelar edición
-            </button>
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar usuario</button>
           </div>
         </form>
       </article>
@@ -269,5 +320,159 @@
         </article>
       </div>
     </section>
+
+    <section *ngIf="vistaActual === 'profesores'">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Gestion de perfil de profesor</h2>
+        <div *ngIf="profesoresSistema.length === 0" class="empty-state">No hay profesores registrados.</div>
+        <div *ngIf="profesoresSistema.length > 0" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div *ngFor="let profesor of profesoresSistema" class="list-item">
+            <p class="font-bold text-slate-900">{{ profesor.nombre }}</p>
+            <p class="text-xs text-slate-600">{{ profesor.email }}</p>
+            <p class="text-xs text-slate-500">Escuela: {{ profesor.escuela?.nombre || 'Sin escuela' }}</p>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="btn-action-edit" (click)="editarUsuario(profesor)">Editar</button>
+              <button type="button" class="btn-action-delete" (click)="eliminarUsuario(profesor)">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'alumnos'">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Gestion de perfil de alumno</h2>
+        <div *ngIf="alumnosSistema.length === 0" class="empty-state">No hay alumnos registrados.</div>
+        <div *ngIf="alumnosSistema.length > 0" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div *ngFor="let alumno of alumnosSistema" class="list-item">
+            <p class="font-bold text-slate-900">{{ alumno.nombre }}</p>
+            <p class="text-xs text-slate-600">{{ alumno.email }}</p>
+            <p class="text-xs text-slate-500">Clase/Grado: {{ alumno.grado || 'No asignado' }}</p>
+            <p class="text-xs font-semibold text-emerald-700">Puntos: {{ alumno.puntos || 0 }}</p>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="btn-action-edit" (click)="editarUsuario(alumno)">Editar</button>
+              <button type="button" class="btn-action-delete" (click)="eliminarUsuario(alumno)">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'ranking'">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Gestion de ranking</h2>
+        <div *ngIf="rankingAlumnos.length === 0" class="empty-state">No hay alumnos para mostrar ranking.</div>
+        <div *ngIf="rankingAlumnos.length > 0" class="space-y-2">
+          <div *ngFor="let alumno of rankingAlumnos; index as i" class="list-item flex items-center justify-between gap-4">
+            <div>
+              <p class="font-bold text-slate-900">#{{ i + 1 }} {{ alumno.nombre }}</p>
+              <p class="text-xs text-slate-600">{{ alumno.escuela?.nombre || 'Sin escuela' }} · {{ alumno.grado || 'Sin grado' }}</p>
+            </div>
+            <p class="text-lg font-black text-emerald-700">{{ alumno.puntos || 0 }} pts</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'encuestas'">
+      <article class="panel-card">
+        <h2 class="panel-title text-emerald-700">Gestion de resultados de encuesta</h2>
+        <div *ngIf="cuestionariosActivos.length === 0" class="empty-state">No hay cuestionarios para mostrar.</div>
+        <div *ngIf="cuestionariosActivos.length > 0" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div *ngFor="let quiz of cuestionariosActivos" class="list-item">
+            <p class="font-bold text-slate-900">{{ quiz.titulo }}</p>
+            <p class="text-xs text-slate-600">Escuela: {{ quiz.escuela.nombre }}</p>
+            <p class="text-xs font-semibold text-emerald-700">Estado: {{ quiz.estado }}</p>
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="btn-action-edit" (click)="editarCuestionario(quiz)">Editar</button>
+              <button type="button" class="btn-action-delete" (click)="eliminarCuestionario(quiz)">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section *ngIf="vistaActual === 'evidencias'">
+      <article class="panel-card">
+        <div class="mb-3 flex flex-wrap items-center gap-2">
+          <h2 class="panel-title mb-0 text-emerald-700">Gestion de evidencias</h2>
+          <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+            Pendientes: {{ evidenciasPendientes }}
+          </span>
+          <span class="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+            Aprobadas: {{ evidenciasAprobadas }}
+          </span>
+          <span class="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-700">
+            Rechazadas: {{ evidenciasRechazadas }}
+          </span>
+        </div>
+
+        <div *ngIf="evidencias.length === 0" class="empty-state">No hay evidencias registradas.</div>
+
+        <div *ngIf="evidencias.length > 0" class="space-y-2 max-h-[28rem] overflow-y-auto">
+          <div *ngFor="let evidencia of evidencias" class="list-item">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="font-bold text-slate-900">Reto: {{ evidencia.reto?.titulo || 'Sin reto' }}</p>
+              <p class="text-xs font-semibold text-emerald-700">{{ evidencia.estado }}</p>
+            </div>
+            <p class="text-xs text-slate-600">Alumno: {{ evidencia.alumno?.nombre || 'Sin alumno' }}</p>
+            <p class="text-xs text-slate-500">Fecha: {{ evidencia.createdAt ? (evidencia.createdAt | date:'short') : 'N/D' }}</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <div *ngIf="modalEdicionUsuarioAbierto && usuarioEnEdicionId" class="modal-backdrop" (click)="cerrarModalEdicionUsuario()">
+      <article class="modal-card" (click)="$event.stopPropagation()">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-emerald-700">Editar usuario</h3>
+            <p class="text-xs text-slate-600">Actualiza datos del profesor o alumno sin salir de la gestión actual.</p>
+          </div>
+          <button type="button" class="btn-action-delete" (click)="cerrarModalEdicionUsuario()">Cerrar</button>
+        </div>
+
+        <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-3">
+          <div>
+            <label class="field-label" for="modalUsrNombre">Nombre</label>
+            <input id="modalUsrNombre" class="field-input" formControlName="nombre" />
+          </div>
+          <div>
+            <label class="field-label" for="modalUsrEmail">Email</label>
+            <input id="modalUsrEmail" type="email" class="field-input" formControlName="email" />
+          </div>
+          <div>
+            <label class="field-label" for="modalUsrPassword">Contraseña (opcional)</label>
+            <input id="modalUsrPassword" type="password" class="field-input" formControlName="password" />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label class="field-label" for="modalUsrRol">Rol</label>
+              <select id="modalUsrRol" class="field-input" formControlName="rol">
+                <option value="alumno">Alumno</option>
+                <option value="profesor">Profesor</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="modalUsrEscuela">Escuela</label>
+              <select id="modalUsrEscuela" class="field-input" formControlName="escuela">
+                <option value="">Selecciona escuela</option>
+                <option *ngFor="let esc of escuelas" [value]="esc._id">{{ esc.nombre }}</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="modalUsrGrado">Clase/Grado (opcional)</label>
+            <input id="modalUsrGrado" class="field-input" formControlName="grado" />
+          </div>
+
+          <div class="flex flex-wrap justify-end gap-2 pt-1">
+            <button type="button" class="btn-action-edit" (click)="cerrarModalEdicionUsuario()">Cancelar</button>
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar cambios</button>
+          </div>
+        </form>
+      </article>
+    </div>
   </section>
 </main>

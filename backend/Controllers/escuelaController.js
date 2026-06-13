@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Escuela = require('../Model/escuelaModel');
+const Usuario = require('../Model/usuarioModel');
 const { crearManejadorErroresMongoose } = require('../utils/mongooseErrorHandler');
 
 // Funciones para validación y manejo de errores
@@ -10,6 +11,18 @@ const manejarErrorMongoose = crearManejadorErroresMongoose({
 
 // Validación de ObjectId de Mongoose para asegurar que los IDs proporcionados sean válidos
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+const sincronizarProfesoresPorEstadoEscuela = async (escuelaId, activa) => {
+  await Usuario.updateMany(
+    {
+      escuela: escuelaId,
+      rol: 'profesor',
+    },
+    {
+      $set: { activo: Boolean(activa) },
+    }
+  );
+};
 
 
 
@@ -108,6 +121,10 @@ const actualizarEscuela = async (req, res) => {
       });
     }
 
+    if (Object.prototype.hasOwnProperty.call(req.body, 'activa')) {
+      await sincronizarProfesoresPorEstadoEscuela(id, escuela.activa);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Escuela actualizada correctamente.',
@@ -144,6 +161,8 @@ const desactivarEscuela = async (req, res) => {
         message: 'Escuela no encontrada para desactivar.',
       });
     }
+
+    await sincronizarProfesoresPorEstadoEscuela(id, false);
 
     return res.status(200).json({
       success: true,

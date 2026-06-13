@@ -16,7 +16,7 @@
 
   <section class="relative mx-auto w-full max-w-6xl px-6 py-8 sm:px-10 md:py-10">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-4xl font-black text-emerald-700 sm:text-6xl">Reporte de Progreso</h1>
+      <h1 class="text-4xl font-black text-emerald-700 sm:text-6xl">Bienvenido {{ sesion?.nombre || 'Alumno' }}</h1>
       <div class="session-chip rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-800 shadow-sm">
         {{ sesion?.nombre || 'Alumno' }}
       </div>

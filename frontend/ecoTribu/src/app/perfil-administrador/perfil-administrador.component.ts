@@ -1,6 +1,7 @@
 import { CommonModule, NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
 import {
   ActualizarCuestionarioAdminPayload,
@@ -10,6 +11,7 @@ import {
   CuestionarioAdmin,
   CrearEscuelaPayload,
   CrearUsuarioAdminPayload,
+  EvidenciaAdmin,
   EscuelaAdmin,
   MetricaAdministrador,
   PerfilAdministradorService,
@@ -19,11 +21,20 @@ import {
 import { Chart } from 'chart.js';
 import { crearGraficoDona } from '../utils/dashboard-chart';
 
-type VistaAdmin = 'resumen' | 'escuelas' | 'usuarios' | 'contenido';
+type VistaAdmin =
+  | 'resumen'
+  | 'escuelas'
+  | 'usuarios'
+  | 'contenido'
+  | 'profesores'
+  | 'alumnos'
+  | 'ranking'
+  | 'encuestas'
+  | 'evidencias';
 
 @Component({
   selector: 'app-perfil-administrador',
-  imports: [CommonModule, NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule],
+  imports: [CommonModule, NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule, RouterLink],
   templateUrl: './perfil-administrador.component.html',
   styleUrls: ['./perfil-administrador.component.css'],
 })
@@ -40,16 +51,27 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   usuarios: ReadonlyArray<UsuarioAdmin> = [];
   retos: ReadonlyArray<RetoAdmin> = [];
   cuestionarios: ReadonlyArray<CuestionarioAdmin> = [];
+  evidencias: ReadonlyArray<EvidenciaAdmin> = [];
   cargando = true;
   mensajeError: string | null = null;
   mensajeAccion: string | null = null;
+  escuelaEnEdicionId: string | null = null;
+  modalEdicionEscuelaAbierto = false;
   usuarioEnEdicionId: string | null = null;
+  modalEdicionUsuarioAbierto = false;
   @ViewChild('adminChart') private adminChartCanvas?: ElementRef<HTMLCanvasElement>;
   private adminChart: Chart | null = null;
 
   readonly escuelaForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
     codigo: ['', [Validators.required, Validators.minLength(2)]],
+    activa: [true],
+  });
+
+  readonly escuelaEdicionForm = this.fb.nonNullable.group({
+    nombre: ['', [Validators.required, Validators.minLength(3)]],
+    codigo: ['', [Validators.required, Validators.minLength(2)]],
+    activa: [true],
   });
 
   readonly usuarioForm = this.fb.nonNullable.group({
@@ -81,6 +103,30 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     return this.cuestionarios.slice(0, 10);
   }
 
+  get profesoresSistema(): UsuarioAdmin[] {
+    return this.usuarios.filter((u) => u.rol === 'profesor');
+  }
+
+  get alumnosSistema(): UsuarioAdmin[] {
+    return this.usuarios.filter((u) => u.rol === 'alumno');
+  }
+
+  get rankingAlumnos(): UsuarioAdmin[] {
+    return [...this.alumnosSistema].sort((a, b) => (b.puntos ?? 0) - (a.puntos ?? 0));
+  }
+
+  get evidenciasPendientes(): number {
+    return this.evidencias.filter((e) => e.estado === 'pendiente').length;
+  }
+
+  get evidenciasAprobadas(): number {
+    return this.evidencias.filter((e) => e.estado === 'aprobada').length;
+  }
+
+  get evidenciasRechazadas(): number {
+    return this.evidencias.filter((e) => e.estado === 'rechazada').length;
+  }
+
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.inicializarAdmin();
@@ -106,6 +152,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     }
   }
 
+  navegarGestionSuperior(vista: VistaAdmin): void {
+    this.cambiarVista(vista);
+  }
+
   crearEscuela(): void {
     if (this.escuelaForm.invalid) {
       this.escuelaForm.markAllAsTouched();
@@ -116,7 +166,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     const payload: CrearEscuelaPayload = {
       nombre: value.nombre.trim(),
       codigo: value.codigo.trim(),
-      activa: true,
+      activa: Boolean(value.activa),
     };
 
     this.cargando = true;
@@ -125,7 +175,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     this.perfilAdminService.crearEscuela(payload).subscribe({
       next: () => {
         this.mensajeAccion = 'Escuela creada correctamente.';
-        this.escuelaForm.reset({ nombre: '', codigo: '' });
+        this.escuelaForm.reset({ nombre: '', codigo: '', activa: true });
         this.refrescarDatos();
       },
       error: () => {
@@ -185,6 +235,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   cancelarEdicionUsuario(): void {
     this.usuarioEnEdicionId = null;
+    this.modalEdicionUsuarioAbierto = false;
     this.usuarioForm.reset({
       nombre: '',
       email: '',
@@ -202,22 +253,71 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   editarEscuela(escuela: EscuelaAdmin): void {
-    const nombre = window.prompt('Nuevo nombre de la escuela:', escuela.nombre)?.trim();
-    if (!nombre) {
+    this.escuelaEnEdicionId = escuela._id;
+    this.modalEdicionEscuelaAbierto = true;
+    this.escuelaEdicionForm.patchValue({
+      nombre: escuela.nombre ?? '',
+      codigo: escuela.codigo ?? '',
+      activa: escuela.activa,
+    });
+    this.mensajeError = null;
+    this.mensajeAccion = `Editando escuela: ${escuela.nombre}`;
+  }
+
+  cerrarModalEdicionEscuela(): void {
+    this.escuelaEnEdicionId = null;
+    this.modalEdicionEscuelaAbierto = false;
+    this.escuelaEdicionForm.reset({ nombre: '', codigo: '', activa: true });
+    this.mensajeAccion = 'Edición de escuela cancelada.';
+  }
+
+  toggleEstadoEscuela(escuela: EscuelaAdmin): void {
+    const accion = escuela.activa ? 'desactivar' : 'activar';
+    const confirmacion = window.confirm(`¿Deseas ${accion} la escuela "${escuela.nombre}"?`);
+    if (!confirmacion) {
       return;
     }
 
-    const codigoActual = escuela.codigo ?? '';
-    const codigo = window.prompt('Nuevo código de la escuela:', codigoActual)?.trim();
-    if (!codigo) {
-      return;
-    }
-
-    const payload: ActualizarEscuelaPayload = { nombre, codigo };
     this.cargando = true;
-    this.perfilAdminService.actualizarEscuela(escuela._id, payload).subscribe({
+    this.perfilAdminService.actualizarEscuela(escuela._id, { activa: !escuela.activa }).subscribe({
+      next: () => {
+        this.mensajeAccion = escuela.activa ? 'Escuela desactivada correctamente.' : 'Escuela activada correctamente.';
+        if (this.escuelaEnEdicionId === escuela._id) {
+          this.cerrarModalEdicionEscuela();
+        }
+        this.refrescarDatos();
+      },
+      error: () => {
+        this.cargando = false;
+        this.mensajeError = escuela.activa ? 'No fue posible desactivar la escuela.' : 'No fue posible activar la escuela.';
+      },
+    });
+  }
+
+  actualizarEscuelaDesdeFormulario(): void {
+    if (!this.escuelaEnEdicionId) {
+      return;
+    }
+
+    if (this.escuelaEdicionForm.invalid) {
+      this.escuelaEdicionForm.markAllAsTouched();
+      return;
+    }
+
+    const value = this.escuelaEdicionForm.getRawValue();
+    const payload: ActualizarEscuelaPayload = {
+      nombre: value.nombre.trim(),
+      codigo: value.codigo.trim(),
+      activa: Boolean(value.activa),
+    };
+
+    this.cargando = true;
+    this.perfilAdminService.actualizarEscuela(this.escuelaEnEdicionId, payload).subscribe({
       next: () => {
         this.mensajeAccion = 'Escuela actualizada correctamente.';
+        this.escuelaEnEdicionId = null;
+        this.modalEdicionEscuelaAbierto = false;
+        this.escuelaEdicionForm.reset({ nombre: '', codigo: '', activa: true });
         this.refrescarDatos();
       },
       error: () => {
@@ -227,27 +327,9 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     });
   }
 
-  eliminarEscuela(escuela: EscuelaAdmin): void {
-    const confirmacion = window.confirm(`¿Deseas desactivar la escuela "${escuela.nombre}"?`);
-    if (!confirmacion) {
-      return;
-    }
-
-    this.cargando = true;
-    this.perfilAdminService.eliminarEscuela(escuela._id).subscribe({
-      next: () => {
-        this.mensajeAccion = 'Escuela desactivada correctamente.';
-        this.refrescarDatos();
-      },
-      error: () => {
-        this.cargando = false;
-        this.mensajeError = 'No fue posible desactivar la escuela.';
-      },
-    });
-  }
-
   editarUsuario(usuario: UsuarioAdmin): void {
     this.usuarioEnEdicionId = usuario._id;
+    this.modalEdicionUsuarioAbierto = true;
     this.configurarFormularioUsuarioParaEditar();
     this.usuarioForm.patchValue({
       nombre: usuario.nombre ?? '',
@@ -259,6 +341,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     });
     this.mensajeError = null;
     this.mensajeAccion = `Editando usuario: ${usuario.nombre}`;
+  }
+
+  cerrarModalEdicionUsuario(): void {
+    this.cancelarEdicionUsuario();
   }
 
   eliminarUsuario(usuario: UsuarioAdmin): void {
@@ -308,6 +394,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
       next: () => {
         this.mensajeAccion = 'Usuario actualizado correctamente.';
         this.usuarioEnEdicionId = null;
+        this.modalEdicionUsuarioAbierto = false;
         this.usuarioForm.reset({
           nombre: '',
           email: '',
@@ -441,6 +528,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
         this.usuarios = reporte.usuarios;
         this.retos = reporte.retos;
         this.cuestionarios = reporte.cuestionarios;
+        this.evidencias = reporte.evidencias;
         this.programarRenderGraficoAdmin();
         this.cargando = false;
       },

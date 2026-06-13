@@ -25,7 +25,7 @@ const iniciarSesion = async (req, res) => {
 
     const usuario = await Usuario.findOne({ email: String(email).toLowerCase().trim() })
       .select('+password')
-      .populate('escuela', 'nombre codigo');
+      .populate('escuela', 'nombre codigo activa');
 
     if (!usuario || !usuario.activo) {
       return res.status(401).json({
@@ -40,6 +40,13 @@ const iniciarSesion = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Credenciales invalidas.',
+      });
+    }
+
+    if (usuario.rol === 'profesor' && (!usuario.escuela || usuario.escuela.activa === false)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Tu escuela está inactiva. Contacta al administrador para reactivarla.',
       });
     }
 

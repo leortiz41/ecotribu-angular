@@ -15,6 +15,7 @@ export interface UsuarioAdmin {
   nombre: string;
   email: string;
   rol: 'alumno' | 'profesor' | 'administrador';
+  puntos?: number;
   grado?: string;
   activo: boolean;
   escuela?: { _id: string; nombre: string; codigo?: string };
@@ -37,6 +38,17 @@ export interface CuestionarioAdmin {
 export interface MetricaAdministrador {
   titulo: string;
   valor: string;
+}
+
+export interface EvidenciaAdmin {
+  _id: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  descripcion?: string;
+  archivoUrl?: string;
+  createdAt?: string;
+  reto?: { _id: string; titulo: string };
+  alumno?: { _id: string; nombre: string; email?: string };
+  revisadoPor?: { _id: string; nombre: string; rol?: string };
 }
 
 export interface CrearEscuelaPayload {
@@ -91,6 +103,7 @@ export class PerfilAdministradorService {
   private readonly usuariosApiUrl = 'http://localhost:3000/api/usuarios';
   private readonly retosApiUrl = 'http://localhost:3000/api/retos';
   private readonly cuestionariosApiUrl = 'http://localhost:3000/api/cuestionarios';
+  private readonly evidenciasApiUrl = 'http://localhost:3000/api/evidencias';
 
   obtenerReporte(): Observable<{
     metricas: MetricaAdministrador[];
@@ -98,12 +111,14 @@ export class PerfilAdministradorService {
     usuarios: UsuarioAdmin[];
     retos: RetoAdmin[];
     cuestionarios: CuestionarioAdmin[];
+    evidencias: EvidenciaAdmin[];
   }> {
     return forkJoin({
       escuelas: this.obtenerEscuelas(),
       usuarios: this.obtenerUsuarios(),
       retos: this.obtenerRetos(),
       cuestionarios: this.obtenerCuestionarios(),
+      evidencias: this.obtenerEvidencias(),
     }).pipe(
       map((payload) => this.construirReporte(payload)),
       catchError(() =>
@@ -113,6 +128,7 @@ export class PerfilAdministradorService {
           usuarios: [],
           retos: [],
           cuestionarios: [],
+          evidencias: [],
         })
       )
     );
@@ -146,17 +162,26 @@ export class PerfilAdministradorService {
     );
   }
 
+  private obtenerEvidencias(): Observable<EvidenciaAdmin[]> {
+    return this.http.get<RespuestaApi<EvidenciaAdmin[]>>(`${this.evidenciasApiUrl}?incluirInactivas=true`).pipe(
+      map((res) => res.data ?? []),
+      catchError(() => of([]))
+    );
+  }
+
   private construirReporte(payload: {
     escuelas: EscuelaAdmin[];
     usuarios: UsuarioAdmin[];
     retos: RetoAdmin[];
     cuestionarios: CuestionarioAdmin[];
+    evidencias: EvidenciaAdmin[];
   }): {
     metricas: MetricaAdministrador[];
     escuelas: EscuelaAdmin[];
     usuarios: UsuarioAdmin[];
     retos: RetoAdmin[];
     cuestionarios: CuestionarioAdmin[];
+    evidencias: EvidenciaAdmin[];
   } {
     const usuariosActivos = payload.usuarios.filter((u) => u.activo).length;
     const profesores = payload.usuarios.filter((u) => u.rol === 'profesor' && u.activo).length;
@@ -170,11 +195,13 @@ export class PerfilAdministradorService {
         { titulo: 'Alumnos', valor: String(alumnos) },
         { titulo: 'Retos Publicados', valor: String(payload.retos.filter((r) => r.estado === 'publicado').length) },
         { titulo: 'Cuestionarios', valor: String(payload.cuestionarios.length) },
+        { titulo: 'Evidencias', valor: String(payload.evidencias.length) },
       ],
       escuelas: payload.escuelas,
       usuarios: payload.usuarios,
       retos: payload.retos,
       cuestionarios: payload.cuestionarios,
+      evidencias: payload.evidencias,
     };
   }
 

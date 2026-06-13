@@ -11,7 +11,7 @@
         </div>
         <span class="brand-title text-2xl font-bold">EcoTribu</span>
       </div>
-      <a routerLink="/iniciar-sesion" class="btn-back rounded-full px-4 py-2 text-sm font-semibold text-white">
+      <a routerLink="/perfil-administrador" class="btn-back rounded-full px-4 py-2 text-sm font-semibold text-white">
         Volver
       </a>
     </div>
@@ -22,11 +22,19 @@
       <div class="mb-8">
         <p class="mb-3 text-sm font-extrabold tracking-[0.32rem] text-emerald-700">GESTIÓN DE ESCUELA</p>
         <h1 class="mb-3 text-3xl font-black uppercase leading-tight text-black sm:text-4xl">
-          Formulario de escuela
+          {{ escuelaEnEdicionId ? 'Editar escuela' : 'Formulario de escuela' }}
         </h1>
         <p class="max-w-3xl text-lg text-emerald-700/95">
-          Completa y valida los datos para enviarlos al backend cuando la API esté lista.
+          {{ escuelaEnEdicionId ? 'Actualiza los datos de la escuela seleccionada.' : 'Completa y guarda los datos de una nueva escuela.' }}
         </p>
+      </div>
+
+      <div *ngIf="mensajeError" class="mb-5 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-red-800">
+        {{ mensajeError }}
+      </div>
+
+      <div *ngIf="mensajeExito" class="mb-5 rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-green-800">
+        {{ mensajeExito }}
       </div>
 
       <form [formGroup]="escuelaForm" (ngSubmit)="guardarEscuela()" class="form-grid rounded-2xl bg-white/75 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] sm:p-6">
@@ -99,18 +107,18 @@
 
         <div class="actions full-width">
           <button type="button" class="btn-secondary rounded-full px-6 py-3 text-base font-bold" (click)="limpiarFormulario()">
-            Limpiar
+            {{ escuelaEnEdicionId ? 'Cancelar edición' : 'Limpiar' }}
           </button>
-          <button type="submit" class="btn-primary rounded-full px-6 py-3 text-base font-extrabold text-white">
-            Validar y preparar envío
+          <button type="submit" class="btn-primary rounded-full px-6 py-3 text-base font-extrabold text-white" [disabled]="cargando">
+            {{ cargando ? 'Guardando...' : (escuelaEnEdicionId ? 'Actualizar escuela' : 'Guardar escuela') }}
           </button>
         </div>
       </form>
 
       <section *ngIf="envioListo && payloadEscuela" class="mt-8 rounded-2xl border border-emerald-500/50 bg-white/80 p-5">
-        <h2 class="text-xl font-bold text-emerald-800">Payload listo para backend</h2>
+        <h2 class="text-xl font-bold text-emerald-800">Datos guardados</h2>
         <p class="mt-2 text-sm text-emerald-900/80">
-          Este objeto ya está validado y listo para enviarse al servicio cuando se conecte la API.
+          La información fue validada y enviada correctamente.
         </p>
         <div class="mt-4 grid gap-2 text-sm text-slate-800 sm:grid-cols-2">
           <p><strong>Nombre:</strong> {{ payloadEscuela.nombreEscuela }}</p>
