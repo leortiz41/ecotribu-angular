@@ -8,25 +8,25 @@
 
 main :is(h1, h2, h3, h4, h5, h6, .panel-title, .brand-title) {
     font-family: 'Avenir Next', 'Segoe UI', 'Trebuchet MS', sans-serif;
-    font-weight: 800 !important;
-    letter-spacing: -0.025em;
-    line-height: 1.08;
+    font-weight: 700 !important;
+    letter-spacing: -0.015em;
+    line-height: 1.12;
     text-wrap: balance;
 }
 
 main h1 {
-    font-size: clamp(2.25rem, 4vw, 3.75rem) !important;
+    font-size: clamp(2rem, 3.6vw, 3.35rem) !important;
 }
 
 main h2 {
-    font-size: clamp(1.6rem, 2.2vw, 2.3rem) !important;
+    font-size: clamp(1.45rem, 2vw, 2rem) !important;
 }
 
 main h3 {
-    font-size: clamp(1.2rem, 1.6vw, 1.6rem) !important;
+    font-size: clamp(1.05rem, 1.35vw, 1.35rem) !important;
 }
 
 main .brand-title {
-    font-weight: 800 !important;
+    font-weight: 700 !important;
     letter-spacing: 0.01em;
 }

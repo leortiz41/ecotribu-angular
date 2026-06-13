@@ -137,9 +137,10 @@
 
 .panel-title {
   margin-bottom: 0.85rem;
-  font-size: 1.4rem;
+  font-size: 1.22rem;
   line-height: 1.2;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .field-label {
