@@ -64,6 +64,19 @@ export class CuestionarioQuizComponent implements OnChanges {
     return `${minutos}:${segundos}`;
   }
 
+  get preguntasRespondidas(): number {
+    return this.respuestasSeleccionadas.filter((respuesta) => this.respuestaValida(respuesta)).length;
+  }
+
+  get progresoPorcentaje(): number {
+    const totalPreguntas = this.preguntas.length;
+    if (totalPreguntas === 0) {
+      return 0;
+    }
+
+    return Math.round((this.preguntasRespondidas / totalPreguntas) * 100);
+  }
+
   seleccionarOpcion(preguntaIndex: number, opcionIndex: number): void {
     if (this.tiempoAgotado) {
       return;

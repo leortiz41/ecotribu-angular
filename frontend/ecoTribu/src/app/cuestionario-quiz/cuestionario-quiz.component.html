@@ -17,6 +17,16 @@
     </section>
 
     <section *ngIf="preguntas.length > 0" class="quiz-body">
+      <section class="quiz-progress-card">
+        <div class="quiz-progress-meta">
+          <p class="quiz-progress-label">Progreso del cuestionario</p>
+          <p class="quiz-progress-count">{{ preguntasRespondidas }}/{{ preguntas.length }} respondidas ({{ progresoPorcentaje }}%)</p>
+        </div>
+        <div class="quiz-progress-track" role="progressbar" [attr.aria-valuenow]="progresoPorcentaje" aria-valuemin="0" aria-valuemax="100">
+          <div class="quiz-progress-fill" [style.width.%]="progresoPorcentaje"></div>
+        </div>
+      </section>
+
       <section *ngIf="tiempoAgotado" class="quiz-timeout-warning">
         Se agotó el tiempo. Enviando respuestas automáticamente...
       </section>
