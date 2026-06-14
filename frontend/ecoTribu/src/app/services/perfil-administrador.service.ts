@@ -149,14 +149,14 @@ export class PerfilAdministradorService {
   }
 
   private obtenerRetos(): Observable<RetoAdmin[]> {
-    return this.http.get<RespuestaApi<RetoAdmin[]>>(`${this.retosApiUrl}?incluirInactivos=true`).pipe(
+    return this.http.get<RespuestaApi<RetoAdmin[]>>(`${this.retosApiUrl}?estado=publicado`).pipe(
       map((res) => res.data ?? []),
       catchError(() => of([]))
     );
   }
 
   private obtenerCuestionarios(): Observable<CuestionarioAdmin[]> {
-    return this.http.get<RespuestaApi<CuestionarioAdmin[]>>(`${this.cuestionariosApiUrl}?incluirInactivos=true`).pipe(
+    return this.http.get<RespuestaApi<CuestionarioAdmin[]>>(`${this.cuestionariosApiUrl}?estado=publicado`).pipe(
       map((res) => res.data ?? []),
       catchError(() => of([]))
     );
@@ -194,7 +194,7 @@ export class PerfilAdministradorService {
         { titulo: 'Profesores', valor: String(profesores) },
         { titulo: 'Alumnos', valor: String(alumnos) },
         { titulo: 'Retos Publicados', valor: String(payload.retos.filter((r) => r.estado === 'publicado').length) },
-        { titulo: 'Cuestionarios', valor: String(payload.cuestionarios.length) },
+        { titulo: 'Cuestionarios Publicados', valor: String(payload.cuestionarios.filter((c) => c.estado === 'publicado').length) },
         { titulo: 'Evidencias', valor: String(payload.evidencias.length) },
       ],
       escuelas: payload.escuelas,

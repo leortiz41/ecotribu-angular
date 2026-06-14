@@ -90,6 +90,10 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.renderizarGraficoProfesor();
   }
 
@@ -200,6 +204,7 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
       escuela: this.sesion.escuela._id,
       creador: this.sesion._id,
       preguntas,
+      estado: 'publicado',
     };
 
     this.cargando = true;
@@ -385,6 +390,20 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
+  publicarCuestionario(cuestionario: CuestionarioProfesor): void {
+    this.cargando = true;
+    this.perfilProfesorService.publicarCuestionario(cuestionario._id).subscribe({
+      next: () => {
+        this.mensajeAccion = 'Cuestionario publicado correctamente.';
+        this.refrescarDatosProfesor();
+      },
+      error: () => {
+        this.cargando = false;
+        this.mensajeError = 'No fue posible publicar el cuestionario.';
+      },
+    });
+  }
+
   private inicializarPerfil(): void {
     this.cargando = true;
     this.mensajeError = null;
@@ -499,6 +518,10 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private renderizarGraficoProfesor(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     if (!this.profesorChartCanvas?.nativeElement || this.actividades.length === 0) {
       return;
     }

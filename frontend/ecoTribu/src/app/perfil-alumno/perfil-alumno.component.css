@@ -41,6 +41,17 @@
   backdrop-filter: blur(4px);
 }
 
+.quiz-direct-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(14, 165, 233, 0.5);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+  color: #ffffff;
+  padding: 0.48rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .field-select {
   width: 100%;
   min-width: 9.3rem;
@@ -162,6 +173,8 @@
   background: rgba(248, 250, 252, 0.95);
   padding: 0.85rem;
   transition: transform 180ms ease, box-shadow 180ms ease;
+  animation: card-pop 420ms ease-out both;
+  animation-delay: calc(var(--card-index, 0) * 80ms);
 }
 
 .reto-card:hover {
@@ -211,6 +224,56 @@
   border-color: rgba(248, 113, 113, 0.35);
 }
 
+.task-hint {
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.65rem;
+}
+
+.task-hint-reto {
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.task-hint-cuestionario {
+  border-color: rgba(14, 165, 233, 0.25);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.task-hint-title {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.task-hint-text {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: #334155;
+}
+
+.quiz-start-btn {
+  border-radius: 0.65rem;
+  border: 1px solid rgba(14, 165, 233, 0.5);
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  color: #ffffff;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.quiz-start-btn:disabled {
+  border-color: rgba(148, 163, 184, 0.5);
+  background: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
 @keyframes grow-bar {
   from {
     transform: scaleY(0);
@@ -228,6 +291,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

@@ -1,0 +1,81 @@
+<div class="quiz-backdrop" (click)="cerrar()">
+  <article class="quiz-card" (click)="$event.stopPropagation()">
+    <header class="quiz-header">
+      <div>
+        <h3 class="quiz-title">{{ cuestionario?.titulo || 'Cuestionario' }}</h3>
+        <p class="quiz-subtitle">Responde todas las preguntas para registrar tu resultado.</p>
+      </div>
+      <div class="quiz-timer-wrap">
+        <p class="quiz-timer-label">Tiempo restante</p>
+        <p class="quiz-timer-value" [class.quiz-timer-danger]="tiempoRestanteSegundos <= 30">{{ tiempoRestanteTexto }}</p>
+      </div>
+      <button type="button" class="quiz-btn-close" (click)="cerrar()" [disabled]="enviando">Cerrar</button>
+    </header>
+
+    <section *ngIf="preguntas.length === 0" class="quiz-empty">
+      Este cuestionario no tiene preguntas configuradas.
+    </section>
+
+    <section *ngIf="preguntas.length > 0" class="quiz-body">
+      <section *ngIf="tiempoAgotado" class="quiz-timeout-warning">
+        Se agotó el tiempo. Enviando respuestas automáticamente...
+      </section>
+
+      <article *ngFor="let pregunta of preguntas; let i = index" class="quiz-question">
+        <p class="quiz-question-title">{{ i + 1 }}. {{ pregunta.enunciado }}</p>
+
+        <div *ngIf="pregunta.tipo === 'seleccion_unica' || !pregunta.tipo" class="quiz-options">
+          <button
+            *ngFor="let opcion of pregunta.opciones || []; let opcionIndex = index"
+            type="button"
+            class="quiz-option"
+            [class.quiz-option-selected]="esOpcionSeleccionada(i, opcionIndex)"
+            (click)="seleccionarOpcion(i, opcionIndex)"
+            [disabled]="enviando || tiempoAgotado"
+          >
+            {{ opcion }}
+          </button>
+        </div>
+
+        <div *ngIf="pregunta.tipo === 'verdadero_falso'" class="quiz-options quiz-options-inline">
+          <button
+            type="button"
+            class="quiz-option"
+            [class.quiz-option-selected]="respuestasSeleccionadas[i] === 'verdadero'"
+            (click)="seleccionarVerdaderoFalso(i, true)"
+            [disabled]="enviando || tiempoAgotado"
+          >
+            Verdadero
+          </button>
+          <button
+            type="button"
+            class="quiz-option"
+            [class.quiz-option-selected]="respuestasSeleccionadas[i] === 'falso'"
+            (click)="seleccionarVerdaderoFalso(i, false)"
+            [disabled]="enviando || tiempoAgotado"
+          >
+            Falso
+          </button>
+        </div>
+
+        <div *ngIf="pregunta.tipo === 'respuesta_corta' || pregunta.tipo === 'completacion'" class="quiz-text-wrapper">
+          <input
+            type="text"
+            class="quiz-text-input"
+            [value]="respuestasSeleccionadas[i] || ''"
+            (input)="actualizarRespuestaTexto(i, $any($event.target).value)"
+            [disabled]="enviando || tiempoAgotado"
+            placeholder="Escribe tu respuesta"
+          />
+        </div>
+      </article>
+    </section>
+
+    <footer class="quiz-footer">
+      <button type="button" class="quiz-btn-secondary" (click)="cerrar()" [disabled]="enviando">Cancelar</button>
+      <button type="button" class="quiz-btn-primary" (click)="enviarRespuestas()" [disabled]="!puedeEnviar || enviando">
+        {{ enviando ? 'Guardando...' : 'Finalizar cuestionario' }}
+      </button>
+    </footer>
+  </article>
+</div>

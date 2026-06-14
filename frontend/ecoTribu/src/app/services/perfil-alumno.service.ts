@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, catchError } from 'rxjs';
+import { Observable, forkJoin, map, of, catchError, switchMap } from 'rxjs';
 import { RespuestaApi } from './auth.service';
 
 interface EvidenciaRelacionReto {
@@ -43,6 +43,24 @@ interface CuestionarioDisponibleApi {
   estado: 'borrador' | 'publicado' | 'cerrado';
   preguntas?: unknown[];
   creador?: CuestionarioRelacionadoAlumno;
+}
+
+interface RespuestaResultadoPayload {
+  preguntaIndex: number;
+  respuesta: string | number | number[];
+  esCorrecta: boolean;
+  puntajeObtenido: number;
+}
+
+interface ResultadoCuestionarioPayload {
+  cuestionario: string;
+  alumno: string;
+  escuela: string;
+  respuestas: RespuestaResultadoPayload[];
+  puntajeObtenido: number;
+  puntajeMaximo: number;
+  aprobado: boolean;
+  intento: number;
 }
 
 interface CuestionarioRelacionado {
@@ -92,6 +110,15 @@ export interface CuestionarioDisponibleAlumno {
   modalidad?: string;
   creadorNombre: string;
   preguntasCantidad: number;
+  preguntas: PreguntaCuestionarioAlumno[];
+}
+
+export interface PreguntaCuestionarioAlumno {
+  enunciado: string;
+  tipo: 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  opciones?: string[];
+  respuestaCorrecta?: string | number | number[];
+  puntaje: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -155,9 +182,41 @@ export class PerfilAlumnoService {
           modalidad: cuestionario.modalidad,
           creadorNombre: cuestionario.creador?.nombre ?? 'Docente',
           preguntasCantidad: Array.isArray(cuestionario.preguntas) ? cuestionario.preguntas.length : 0,
+          preguntas: this.normalizarPreguntas(cuestionario.preguntas),
         }))
       ),
       catchError(() => of([]))
+    );
+  }
+
+  registrarResultadoCuestionario(
+    alumnoId: string,
+    escuelaId: string,
+    cuestionario: CuestionarioDisponibleAlumno,
+    respuestasUsuario: Array<string | number | number[] | null>
+  ): Observable<void> {
+    return this.obtenerIntentoSiguiente(cuestionario._id, alumnoId).pipe(
+      map((intento) => {
+        const respuestasEvaluadas = this.evaluarRespuestas(cuestionario.preguntas, respuestasUsuario);
+        const puntajeObtenido = respuestasEvaluadas.reduce((acc, item) => acc + item.puntajeObtenido, 0);
+        const puntajeMaximo = cuestionario.preguntas.reduce((acc, item) => acc + (Number(item.puntaje) || 0), 0);
+        const porcentaje = puntajeMaximo > 0 ? (puntajeObtenido / puntajeMaximo) * 100 : 0;
+
+        const payload: ResultadoCuestionarioPayload = {
+          cuestionario: cuestionario._id,
+          alumno: alumnoId,
+          escuela: escuelaId,
+          respuestas: respuestasEvaluadas,
+          puntajeObtenido,
+          puntajeMaximo,
+          aprobado: porcentaje >= 60,
+          intento,
+        };
+
+        return payload;
+      }),
+      switchMap((payload) => this.http.post<RespuestaApi<unknown>>(this.resultadosApiUrl, payload)),
+      map(() => void 0)
     );
   }
 
@@ -198,6 +257,92 @@ export class PerfilAlumnoService {
         map((res) => res.data ?? []),
         catchError(() => of([]))
       );
+  }
+
+  private obtenerIntentoSiguiente(cuestionarioId: string, alumnoId: string): Observable<number> {
+    const query = `${this.resultadosApiUrl}?cuestionario=${cuestionarioId}&alumno=${alumnoId}&incluirInactivos=true`;
+
+    return this.http.get<RespuestaApi<Array<{ intento?: number }>>>(query).pipe(
+      map((res) => {
+        const resultados = res.data ?? [];
+        const intentoMaximo = resultados.reduce((acc, item) => Math.max(acc, Number(item.intento) || 0), 0);
+        return intentoMaximo + 1;
+      }),
+      catchError(() => of(1))
+    );
+  }
+
+  private normalizarPreguntas(rawPreguntas?: unknown[]): PreguntaCuestionarioAlumno[] {
+    if (!Array.isArray(rawPreguntas)) {
+      return [];
+    }
+
+    const preguntas: PreguntaCuestionarioAlumno[] = [];
+
+    rawPreguntas.forEach((pregunta) => {
+      if (!pregunta || typeof pregunta !== 'object') {
+        return;
+      }
+
+      const item = pregunta as {
+        enunciado?: string;
+        tipo?: PreguntaCuestionarioAlumno['tipo'];
+        opciones?: string[];
+        respuestaCorrecta?: string | number | number[];
+        puntaje?: number;
+      };
+
+      preguntas.push({
+        enunciado: item.enunciado ?? 'Pregunta',
+        tipo: item.tipo ?? 'seleccion_unica',
+        opciones: Array.isArray(item.opciones) ? item.opciones : [],
+        respuestaCorrecta: item.respuestaCorrecta,
+        puntaje: Number(item.puntaje) || 1,
+      });
+    });
+
+    return preguntas;
+  }
+
+  private evaluarRespuestas(
+    preguntas: ReadonlyArray<PreguntaCuestionarioAlumno>,
+    respuestasUsuario: Array<string | number | number[] | null>
+  ): RespuestaResultadoPayload[] {
+    return preguntas.map((pregunta, preguntaIndex) => {
+      const respuesta = respuestasUsuario[preguntaIndex];
+      const respuestaNormalizada: string | number | number[] =
+        respuesta === null || respuesta === undefined ? '' : respuesta;
+
+      const esCorrecta = this.esRespuestaCorrecta(respuestaNormalizada, pregunta.respuestaCorrecta);
+
+      return {
+        preguntaIndex,
+        respuesta: respuestaNormalizada,
+        esCorrecta,
+        puntajeObtenido: esCorrecta ? Number(pregunta.puntaje) || 0 : 0,
+      };
+    });
+  }
+
+  private esRespuestaCorrecta(
+    respuestaUsuario: string | number | number[],
+    respuestaCorrecta?: string | number | number[]
+  ): boolean {
+    if (respuestaCorrecta === undefined || respuestaCorrecta === null) {
+      return false;
+    }
+
+    if (Array.isArray(respuestaCorrecta)) {
+      if (!Array.isArray(respuestaUsuario)) {
+        return false;
+      }
+
+      const correcta = [...respuestaCorrecta].map(String).sort().join('|');
+      const usuario = [...respuestaUsuario].map(String).sort().join('|');
+      return correcta === usuario;
+    }
+
+    return String(respuestaUsuario).trim().toLowerCase() === String(respuestaCorrecta).trim().toLowerCase();
   }
 
   private construirReporte(

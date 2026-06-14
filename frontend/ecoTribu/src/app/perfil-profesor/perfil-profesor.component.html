@@ -168,7 +168,12 @@
         <div *ngIf="retosProfesor.length === 0" class="empty-state">Aun no has creado retos.</div>
         <ul *ngIf="retosProfesor.length > 0" class="space-y-2">
           <li *ngFor="let item of retosProfesor" class="list-item">
-            <p class="font-bold text-slate-900">{{ item.titulo }}</p>
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-bold text-slate-900">{{ item.titulo }}</p>
+              <span class="visibility-chip" [class.visibility-chip-hidden]="item.estado !== 'publicado'">
+                {{ item.estado === 'publicado' ? 'Visible para alumnos' : 'No visible para alumnos' }}
+              </span>
+            </div>
             <p class="text-sm font-semibold text-emerald-700">{{ item.estado }}</p>
             <div class="mt-3 flex gap-2">
               <button *ngIf="item.estado === 'borrador'" type="button" class="btn-action-edit" (click)="publicarReto(item)">Publicar</button>
@@ -232,12 +237,21 @@
 
       <article class="panel-card">
         <h2 class="panel-title">Mis cuestionarios</h2>
+        <p class="mb-3 text-sm font-semibold text-slate-600">
+          Solo los cuestionarios con estado <strong>publicado</strong> aparecen en el perfil del alumno.
+        </p>
         <div *ngIf="cuestionariosProfesor.length === 0" class="empty-state">Aun no has creado cuestionarios.</div>
         <ul *ngIf="cuestionariosProfesor.length > 0" class="space-y-2">
           <li *ngFor="let item of cuestionariosProfesor" class="list-item">
-            <p class="font-bold text-slate-900">{{ item.titulo }}</p>
+            <div class="flex items-start justify-between gap-2">
+              <p class="font-bold text-slate-900">{{ item.titulo }}</p>
+              <span class="visibility-chip" [class.visibility-chip-hidden]="item.estado !== 'publicado'">
+                {{ item.estado === 'publicado' ? 'Visible para alumnos' : 'No visible para alumnos' }}
+              </span>
+            </div>
             <p class="text-sm font-semibold text-emerald-700">{{ item.estado }}</p>
             <div class="mt-3 flex gap-2">
+              <button *ngIf="item.estado === 'borrador'" type="button" class="btn-action-edit" (click)="publicarCuestionario(item)">Publicar</button>
               <button type="button" class="btn-action-edit" (click)="editarCuestionario(item)">Editar</button>
               <button type="button" class="btn-action-delete" (click)="eliminarCuestionario(item)">Eliminar</button>
             </div>

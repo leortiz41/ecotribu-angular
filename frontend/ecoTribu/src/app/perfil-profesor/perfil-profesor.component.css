@@ -149,6 +149,25 @@
   padding: 0.75rem;
 }
 
+.visibility-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.36);
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.visibility-chip-hidden {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
 .empty-state {
   border-radius: 0.8rem;
   border: 1px solid rgba(148, 163, 184, 0.2);

@@ -2,6 +2,7 @@ import { NgClass, NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '@angu
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
+import { CuestionarioQuizComponent, QuizCompletadoPayload } from '../cuestionario-quiz/cuestionario-quiz.component';
 import {
   CuestionarioDisponibleAlumno,
   ActividadPerfilAlumno,
@@ -16,7 +17,7 @@ type FiltroRetoAlumno = 'todos' | 'sin_entregar' | 'pendiente' | 'aprobada' | 'r
 
 @Component({
   selector: 'app-perfil-alumno',
-  imports: [NgFor, NgIf, NgClass, NgOptimizedImage],
+  imports: [NgFor, NgIf, NgClass, NgOptimizedImage, CuestionarioQuizComponent],
   templateUrl: './perfil-alumno.component.html',
   styleUrls: ['./perfil-alumno.component.css'],
 })
@@ -30,9 +31,12 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   actividades: ReadonlyArray<ActividadPerfilAlumno> = [];
   retosDisponibles: ReadonlyArray<RetoDisponibleAlumno> = [];
   cuestionariosDisponibles: ReadonlyArray<CuestionarioDisponibleAlumno> = [];
+  cuestionarioSeleccionado: CuestionarioDisponibleAlumno | null = null;
+  guardandoQuiz = false;
   filtroRetoActual: FiltroRetoAlumno = 'todos';
   cargando = true;
   mensajeError: string | null = null;
+  mensajeQuiz: string | null = null;
   @ViewChild('actividadChart') private actividadChartCanvas?: ElementRef<HTMLCanvasElement>;
   private actividadChart: Chart | null = null;
 
@@ -59,6 +63,10 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.renderizarGraficoActividades();
   }
 
@@ -97,6 +105,7 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.retosDisponibles = retosDisponibles;
         this.cuestionariosDisponibles = cuestionariosDisponibles;
         this.renderizarGraficoActividades();
+        this.mensajeQuiz = null;
         this.cargando = false;
       },
       error: () => {
@@ -121,7 +130,20 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.filtroRetoActual = valor as FiltroRetoAlumno;
   }
 
+  irASeccionCuestionarios(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const seccion = document.getElementById('seccion-cuestionarios-alumno');
+    seccion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   private renderizarGraficoActividades(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     if (!this.actividadChartCanvas?.nativeElement || this.actividades.length === 0) {
       return;
     }
@@ -167,6 +189,80 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
       default:
         return 'status-neutral';
     }
+  }
+
+  instruccionReto(estado: RetoDisponibleAlumno['estadoAlumno']): string {
+    switch (estado) {
+      case 'sin_entregar':
+        return 'Lee las instrucciones del reto y prepara tu evidencia para enviarla esta semana.';
+      case 'pendiente':
+        return 'Tu evidencia ya fue enviada. Espera la revisión de tu profesor.';
+      case 'aprobada':
+        return 'Excelente trabajo. Revisa tus puntos y continúa con el siguiente reto.';
+      case 'rechazada':
+        return 'Corrige tu evidencia según la retroalimentación y vuelve a enviarla.';
+      default:
+        return 'Revisa el estado del reto y sigue la indicación de tu profesor.';
+    }
+  }
+
+  instruccionCuestionario(cuestionario: CuestionarioDisponibleAlumno): string {
+    const modalidad = (cuestionario.modalidad || 'mixto').toLowerCase();
+
+    if (modalidad === 'mixto') {
+      return 'Abre el cuestionario y responde todas las preguntas. Tendrás distintos tipos de reactivos.';
+    }
+
+    return `Abre el cuestionario y completa la modalidad ${modalidad.replaceAll('_', ' ')} con atención.`;
+  }
+
+  abrirQuiz(cuestionario: CuestionarioDisponibleAlumno): void {
+    this.mensajeError = null;
+    this.mensajeQuiz = null;
+
+    if (!cuestionario.preguntas || cuestionario.preguntas.length === 0) {
+      this.mensajeError = 'Este cuestionario aun no tiene preguntas configuradas por el profesor.';
+      return;
+    }
+
+    this.cuestionarioSeleccionado = cuestionario;
+  }
+
+  cerrarQuiz(): void {
+    if (this.guardandoQuiz) {
+      return;
+    }
+
+    this.cuestionarioSeleccionado = null;
+  }
+
+  completarQuiz(evento: QuizCompletadoPayload): void {
+    if (!this.sesion || !this.cuestionarioSeleccionado || this.guardandoQuiz) {
+      return;
+    }
+
+    this.guardandoQuiz = true;
+    this.mensajeQuiz = null;
+
+    this.perfilAlumnoService
+      .registrarResultadoCuestionario(
+        this.sesion._id,
+        this.sesion.escuela._id,
+        this.cuestionarioSeleccionado,
+        evento.respuestas
+      )
+      .subscribe({
+        next: () => {
+          this.guardandoQuiz = false;
+          this.cuestionarioSeleccionado = null;
+          this.mensajeQuiz = 'Resultado guardado correctamente. Se actualizó tu progreso.';
+          this.cargarReporte();
+        },
+        error: () => {
+          this.guardandoQuiz = false;
+          this.mensajeError = 'No fue posible guardar el resultado del cuestionario.';
+        },
+      });
   }
 
   private metricasPorDefecto(): ReadonlyArray<MetricaPerfilAlumno> {

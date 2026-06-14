@@ -93,6 +93,7 @@ export interface CrearCuestionarioPayload {
   escuela: string;
   creador: string;
   preguntas: PreguntaCuestionarioPayload[];
+  estado?: 'borrador' | 'publicado' | 'cerrado';
 }
 
 export interface ActualizarRetoPayload {
@@ -192,6 +193,10 @@ export class PerfilProfesorService {
 
   crearCuestionario(payload: CrearCuestionarioPayload): Observable<RespuestaApi<CuestionarioProfesor>> {
     return this.http.post<RespuestaApi<CuestionarioProfesor>>(this.cuestionariosApiUrl, payload);
+  }
+
+  publicarCuestionario(cuestionarioId: string): Observable<RespuestaApi<CuestionarioProfesor>> {
+    return this.http.post<RespuestaApi<CuestionarioProfesor>>(`${this.cuestionariosApiUrl}/${cuestionarioId}/publicar`, {});
   }
 
   actualizarReto(retoId: string, payload: ActualizarRetoPayload): Observable<RespuestaApi<RetoProfesor>> {

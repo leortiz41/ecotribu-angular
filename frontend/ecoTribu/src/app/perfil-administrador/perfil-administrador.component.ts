@@ -102,7 +102,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   get cuestionariosActivos(): CuestionarioAdmin[] {
-    return this.cuestionarios.slice(0, 10);
+    return this.cuestionarios.filter((c) => c.estado === 'publicado').slice(0, 10);
   }
 
   get profesoresSistema(): UsuarioAdmin[] {
@@ -138,6 +138,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   ngAfterViewInit(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.programarRenderGraficoAdmin();
   }
 
@@ -582,6 +586,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   private renderizarGraficoAdmin(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     if (!this.adminChartCanvas?.nativeElement || this.metricas.length === 0) {
       return;
     }
