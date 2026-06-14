@@ -77,6 +77,16 @@ export class CuestionarioQuizComponent implements OnChanges {
     return Math.round((this.preguntasRespondidas / totalPreguntas) * 100);
   }
 
+  get erroresPermitidos(): number {
+    const totalPreguntas = this.preguntas.length;
+    if (totalPreguntas === 0) {
+      return 0;
+    }
+
+    const respuestasMinimasParaAprobar = Math.ceil(totalPreguntas * 0.6);
+    return Math.max(0, totalPreguntas - respuestasMinimasParaAprobar);
+  }
+
   seleccionarOpcion(preguntaIndex: number, opcionIndex: number): void {
     if (this.tiempoAgotado) {
       return;

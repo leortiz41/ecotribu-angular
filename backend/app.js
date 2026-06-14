@@ -13,8 +13,8 @@ const cors = require('cors');
 const app = express();
 const port = Number(process.env.PORT || 3000);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors());
 
 

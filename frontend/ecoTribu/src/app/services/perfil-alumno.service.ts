@@ -6,13 +6,23 @@ import { RespuestaApi } from './auth.service';
 interface EvidenciaRelacionReto {
   _id: string;
   titulo: string;
+  puntos?: number;
 }
 
 interface EvidenciaAlumno {
   _id: string;
   estado: 'pendiente' | 'aprobada' | 'rechazada';
   reto?: EvidenciaRelacionReto | string;
+  puntoRecoleccionNombre?: string;
+  puntoRecoleccionCiudad?: string;
   createdAt: string;
+}
+
+interface UsuarioRankingEscuelaApi {
+  _id: string;
+  nombre: string;
+  puntos?: number;
+  createdAt?: string;
 }
 
 interface RetoRelacionCreador {
@@ -121,6 +131,35 @@ export interface PreguntaCuestionarioAlumno {
   puntaje: number;
 }
 
+export interface CrearEvidenciaAlumnoPayload {
+  reto: string;
+  alumno: string;
+  descripcion: string;
+  archivoUrl: string;
+  puntoRecoleccionNombre: string;
+  puntoRecoleccionCiudad: string;
+}
+
+export interface RankingFilaAlumno {
+  posicion: number;
+  alumnoId: string;
+  nombre: string;
+  puntos: number;
+  esActual: boolean;
+}
+
+export interface RankingAlumnoEscuela {
+  miPosicion: number | null;
+  totalParticipantes: number;
+  puntosActuales: number;
+  top: RankingFilaAlumno[];
+}
+
+export interface PuntoRecoleccionSugerido {
+  nombre: string;
+  ciudad: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PerfilAlumnoService {
   private readonly http = inject(HttpClient);
@@ -128,6 +167,15 @@ export class PerfilAlumnoService {
   private readonly cuestionariosApiUrl = 'http://localhost:3000/api/cuestionarios';
   private readonly resultadosApiUrl = 'http://localhost:3000/api/resultados-cuestionarios';
   private readonly retosApiUrl = 'http://localhost:3000/api/retos';
+  private readonly usuariosApiUrl = 'http://localhost:3000/api/usuarios';
+
+  private readonly puntosRecoleccionSugeridos: ReadonlyArray<PuntoRecoleccionSugerido> = [
+    { nombre: 'Centro de Acopio Municipal', ciudad: 'Distrito Central' },
+    { nombre: 'Punto Verde Parque Central', ciudad: 'San Pedro Sula' },
+    { nombre: 'Estación de Reciclaje Barrio Abajo', ciudad: 'La Ceiba' },
+    { nombre: 'Centro de Clasificación Comunitario', ciudad: 'Comayagua' },
+    { nombre: 'Punto Limpio Mercado Local', ciudad: 'Choluteca' },
+  ];
 
   obtenerReporte(alumnoId: string): Observable<ReportePerfilAlumno> {
     return forkJoin({
@@ -218,6 +266,71 @@ export class PerfilAlumnoService {
       switchMap((payload) => this.http.post<RespuestaApi<unknown>>(this.resultadosApiUrl, payload)),
       map(() => void 0)
     );
+  }
+
+  crearEvidencia(payload: CrearEvidenciaAlumnoPayload): Observable<void> {
+    return this.http.post<RespuestaApi<unknown>>(this.evidenciasApiUrl, payload).pipe(map(() => void 0));
+  }
+
+  obtenerPuntosRetosAprobados(alumnoId: string): Observable<number> {
+    return this.obtenerEvidenciasAlumno(alumnoId).pipe(
+      map((evidencias) =>
+        evidencias
+          .filter((item) => item.estado === 'aprobada')
+          .reduce((acc, item) => acc + this.extraerPuntosReto(item.reto), 0)
+      ),
+      catchError(() => of(0))
+    );
+  }
+
+  obtenerRankingEscuela(escuelaId: string, alumnoId: string): Observable<RankingAlumnoEscuela> {
+    const query = `${this.usuariosApiUrl}?rol=alumno&escuela=${escuelaId}`;
+
+    return this.http.get<RespuestaApi<UsuarioRankingEscuelaApi[]>>(query).pipe(
+      map((res) => {
+        const alumnos = [...(res.data ?? [])];
+        alumnos.sort((a, b) => {
+          const puntosA = Number(a.puntos ?? 0);
+          const puntosB = Number(b.puntos ?? 0);
+          if (puntosB !== puntosA) {
+            return puntosB - puntosA;
+          }
+
+          const fechaA = a.createdAt ? new Date(a.createdAt).getTime() : Number.MAX_SAFE_INTEGER;
+          const fechaB = b.createdAt ? new Date(b.createdAt).getTime() : Number.MAX_SAFE_INTEGER;
+          return fechaA - fechaB;
+        });
+
+        const filas = alumnos.map((item, index) => ({
+          posicion: index + 1,
+          alumnoId: item._id,
+          nombre: item.nombre,
+          puntos: Number(item.puntos ?? 0),
+          esActual: item._id === alumnoId,
+        }));
+
+        const filaActual = filas.find((item) => item.esActual);
+
+        return {
+          miPosicion: filaActual?.posicion ?? null,
+          totalParticipantes: filas.length,
+          puntosActuales: filaActual?.puntos ?? 0,
+          top: filas.slice(0, 8),
+        } satisfies RankingAlumnoEscuela;
+      }),
+      catchError(() =>
+        of({
+          miPosicion: null,
+          totalParticipantes: 0,
+          puntosActuales: 0,
+          top: [],
+        })
+      )
+    );
+  }
+
+  obtenerPuntosRecoleccionSugeridos(): ReadonlyArray<PuntoRecoleccionSugerido> {
+    return this.puntosRecoleccionSugeridos;
   }
 
   private obtenerRetosPublicadosEscuela(escuelaId: string, grado?: string): Observable<RetoDisponibleApi[]> {
@@ -472,5 +585,13 @@ export class PerfilAlumnoService {
     }
 
     return reto.titulo;
+  }
+
+  private extraerPuntosReto(reto?: EvidenciaRelacionReto | string): number {
+    if (!reto || typeof reto === 'string') {
+      return 0;
+    }
+
+    return Number(reto.puntos ?? 0);
   }
 }

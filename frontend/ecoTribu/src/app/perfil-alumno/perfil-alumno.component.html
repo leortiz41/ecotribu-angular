@@ -10,7 +10,11 @@
         </div>
         <span class="brand-title text-2xl font-bold">EcoTribu</span>
       </div>
-      <p class="text-base font-semibold tracking-wide sm:text-2xl">Perfil del Alumno</p>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <p class="text-base font-semibold tracking-wide sm:text-2xl">Perfil del Alumno</p>
+        <button type="button" class="header-action-btn" (click)="cambiarContrasena()">Cambiar contraseña</button>
+        <button type="button" class="header-action-btn header-action-btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+      </div>
     </div>
   </header>
 
@@ -104,6 +108,51 @@
       </div>
     </article>
 
+    <article class="mt-6 rounded-[2rem] border border-indigo-200 bg-white/90 px-5 py-6 shadow-[0_10px_24px_rgba(15,23,42,0.08)] sm:px-8">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-2xl font-black text-indigo-800 sm:text-3xl">Mi puntaje y posicion en ranking</h2>
+        <span class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-800">
+          {{ rankingEscuela.totalParticipantes }} participantes
+        </span>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rank-kpi">
+          <p class="rank-kpi-label">Puntos actuales</p>
+          <p class="rank-kpi-value">{{ rankingEscuela.puntosActuales }}</p>
+        </div>
+        <div class="rank-kpi">
+          <p class="rank-kpi-label">Puntos por retos aprobados</p>
+          <p class="rank-kpi-value">{{ puntosRetosAprobados }}</p>
+        </div>
+        <div class="rank-kpi">
+          <p class="rank-kpi-label">Mi posicion</p>
+          <p class="rank-kpi-value">
+            {{ rankingEscuela.miPosicion ? ('#' + rankingEscuela.miPosicion) : 'Sin posicion aun' }}
+          </p>
+        </div>
+      </div>
+
+      <div *ngIf="rankingEscuela.top.length > 0" class="mt-4 overflow-x-auto">
+        <table class="rank-table min-w-full">
+          <thead>
+            <tr>
+              <th>Posicion</th>
+              <th>Alumno</th>
+              <th>Puntos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let fila of rankingEscuela.top" [class.rank-current]="fila.esActual">
+              <td>#{{ fila.posicion }}</td>
+              <td>{{ fila.nombre }}</td>
+              <td>{{ fila.puntos }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
     <article class="mt-6 rounded-[2rem] border border-emerald-200 bg-white/90 px-5 py-6 shadow-[0_10px_24px_rgba(15,23,42,0.08)] sm:px-8">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 class="text-2xl font-black text-emerald-700 sm:text-3xl">Retos disponibles en mi escuela</h2>
@@ -133,6 +182,17 @@
           <div class="task-hint task-hint-reto mt-3">
             <p class="task-hint-title">Que hacer ahora</p>
             <p class="task-hint-text">{{ instruccionReto(reto.estadoAlumno) }}</p>
+          </div>
+
+          <div class="mt-3 flex justify-end">
+            <button
+              type="button"
+              class="quiz-start-btn"
+              (click)="abrirFormularioEvidencia(reto)"
+              [disabled]="reto.estadoAlumno !== 'sin_entregar'"
+            >
+              {{ reto.estadoAlumno === 'sin_entregar' ? 'Subir evidencia' : 'Evidencia registrada' }}
+            </button>
           </div>
         </article>
       </div>
@@ -192,5 +252,14 @@
       (cancelar)="cerrarQuiz()"
       (completar)="completarQuiz($event)"
     ></app-cuestionario-quiz>
+
+    <app-evidencia-reto
+      *ngIf="retoSeleccionadoEvidencia"
+      [reto]="retoSeleccionadoEvidencia"
+      [enviando]="enviandoEvidencia"
+      [puntosRecoleccion]="puntosRecoleccionSugeridos"
+      (cancelar)="cerrarFormularioEvidencia()"
+      (enviar)="enviarEvidencia($event)"
+    ></app-evidencia-reto>
   </section>
 </main>

@@ -1,0 +1,47 @@
+<div class="evidencia-backdrop" (click)="cerrar()">
+  <article class="evidencia-card" (click)="$event.stopPropagation()">
+    <header class="evidencia-header">
+      <div>
+        <h3 class="evidencia-title">Subir evidencia del reto</h3>
+        <p class="evidencia-subtitle">{{ reto?.titulo || 'Reto' }}</p>
+      </div>
+      <button type="button" class="evidencia-close" (click)="cerrar()" [disabled]="enviando">Cerrar</button>
+    </header>
+
+    <form [formGroup]="evidenciaForm" (ngSubmit)="enviarEvidencia()" class="evidencia-form">
+      <label class="evidencia-label" for="puntoRecoleccion">Punto de recoleccion identificado</label>
+      <select id="puntoRecoleccion" class="evidencia-select" formControlName="puntoRecoleccionIndice" [disabled]="enviando">
+        <option [value]="-1">Selecciona un punto</option>
+        <option *ngFor="let punto of puntosRecoleccion; let i = index" [value]="i">
+          {{ punto.nombre }} - {{ punto.ciudad }}
+        </option>
+      </select>
+
+      <label class="evidencia-label" for="descripcionEvidencia">Descripcion de la entrega</label>
+      <textarea
+        id="descripcionEvidencia"
+        class="evidencia-textarea"
+        formControlName="descripcion"
+        rows="3"
+        [disabled]="enviando"
+        placeholder="Explica brevemente que recolectaste y como fue la actividad"
+      ></textarea>
+
+      <label class="evidencia-label" for="fotoEvidencia">Foto de la evidencia</label>
+      <input id="fotoEvidencia" type="file" accept="image/*" class="evidencia-file" (change)="seleccionarArchivo($event)" [disabled]="enviando" />
+
+      <p *ngIf="mensajeArchivo" class="evidencia-msg-error">{{ mensajeArchivo }}</p>
+
+      <div *ngIf="vistaPreviaArchivo" class="evidencia-preview-wrap">
+        <img [src]="vistaPreviaArchivo" alt="Vista previa de evidencia" class="evidencia-preview" />
+      </div>
+
+      <footer class="evidencia-footer">
+        <button type="button" class="btn-secondary" (click)="cerrar()" [disabled]="enviando">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="!puedeEnviar">
+          {{ enviando ? 'Enviando...' : 'Enviar evidencia' }}
+        </button>
+      </footer>
+    </form>
+  </article>
+</div>

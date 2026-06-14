@@ -2,7 +2,7 @@ import { CommonModule, NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '
 import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
 import {
   ActualizarCuestionarioAdminPayload,
@@ -43,6 +43,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly perfilAdminService = inject(PerfilAdministradorService);
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
 
   vistaActual: VistaAdmin = 'resumen';
@@ -148,6 +149,44 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   ngOnDestroy(): void {
     this.adminChart?.destroy();
     this.restaurarScrollBody();
+  }
+
+  cerrarSesion(): void {
+    this.authService.cerrarSesionGuardada();
+    this.router.navigate(['/']);
+  }
+
+  cambiarContrasena(): void {
+    if (!this.sesion) {
+      this.mensajeError = 'No hay sesión activa para cambiar la contraseña.';
+      return;
+    }
+
+    const nueva = window.prompt('Ingresa tu nueva contraseña (mínimo 6 caracteres):', '');
+    if (!nueva) {
+      return;
+    }
+
+    if (nueva.trim().length < 6) {
+      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    const confirmar = window.prompt('Confirma tu nueva contraseña:', '');
+    if (confirmar !== nueva) {
+      this.mensajeError = 'La confirmación no coincide con la nueva contraseña.';
+      return;
+    }
+
+    this.authService.cambiarContrasena(this.sesion._id, nueva).subscribe({
+      next: () => {
+        this.mensajeError = null;
+        this.mensajeAccion = 'Contraseña actualizada correctamente.';
+      },
+      error: () => {
+        this.mensajeError = 'No fue posible actualizar la contraseña.';
+      },
+    });
   }
 
   @HostListener('document:keydown.escape', ['$event'])

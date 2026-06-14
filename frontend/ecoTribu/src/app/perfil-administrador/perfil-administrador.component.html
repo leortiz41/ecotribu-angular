@@ -11,6 +11,10 @@
       <div class="w-full lg:w-auto">
         <p class="mb-1 text-left text-base font-semibold tracking-wide sm:text-xl lg:text-right">Panel Administrador</p>
         <p class="mb-3 text-left text-xs text-emerald-50/90 lg:text-right">Accesos rápidos de gestión</p>
+        <div class="mb-3 flex flex-wrap justify-start gap-2 lg:justify-end">
+          <button type="button" class="header-action-btn" (click)="cambiarContrasena()">Cambiar contraseña</button>
+          <button type="button" class="header-action-btn header-action-btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+        </div>
         <nav class="header-nav-grid" aria-label="Gestiones principales">
           <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'escuelas'" (click)="navegarGestionSuperior('escuelas')">
             Escuelas

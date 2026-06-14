@@ -118,7 +118,17 @@ export interface EvidenciaResumenProfesor {
   estado: 'pendiente' | 'aprobada' | 'rechazada';
   reto: string | { _id: string };
   alumno: string | { _id: string };
+  descripcion?: string;
+  archivoUrl?: string;
+  puntoRecoleccionNombre?: string;
+  puntoRecoleccionCiudad?: string;
+  createdAt?: string;
   activo: boolean;
+}
+
+export interface RevisarEvidenciaPayload {
+  revisor: string;
+  comentarioRevision?: string;
 }
 
 export interface ResultadoCuestionarioResumenProfesor {
@@ -232,6 +242,14 @@ export class PerfilProfesorService {
       map((res) => res.data ?? []),
       catchError(() => of([]))
     );
+  }
+
+  aprobarEvidencia(evidenciaId: string, payload: RevisarEvidenciaPayload): Observable<void> {
+    return this.http.patch<RespuestaApi<unknown>>(`${this.evidenciasApiUrl}/${evidenciaId}/aprobar`, payload).pipe(map(() => void 0));
+  }
+
+  rechazarEvidencia(evidenciaId: string, payload: RevisarEvidenciaPayload): Observable<void> {
+    return this.http.patch<RespuestaApi<unknown>>(`${this.evidenciasApiUrl}/${evidenciaId}/rechazar`, payload).pipe(map(() => void 0));
   }
 
   private obtenerRetosPorEstado(profesorId: string, estado: RetoProfesor['estado']): Observable<RetoProfesor[]> {

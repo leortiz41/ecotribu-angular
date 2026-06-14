@@ -7,7 +7,11 @@
         </div>
         <span class="brand-title text-2xl font-bold">EcoTribu</span>
       </div>
-      <p class="text-base font-semibold tracking-wide sm:text-2xl">Perfil del Profesor</p>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <p class="text-base font-semibold tracking-wide sm:text-2xl">Perfil del Profesor</p>
+        <button type="button" class="header-action-btn" (click)="cambiarContrasena()">Cambiar contraseña</button>
+        <button type="button" class="header-action-btn header-action-btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+      </div>
     </div>
   </header>
 
@@ -27,7 +31,7 @@
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p class="text-lg font-black text-emerald-700 sm:text-2xl">Resumen Académico</p>
-          <p class="mt-1 text-sm text-emerald-700/80">Datos en tiempo real desde el backend</p>
+          <p class="mt-1 text-sm text-emerald-700/80">Datos actualizados</p>
         </div>
         <button type="button" class="btn-refresh rounded-2xl px-6 py-3 text-lg font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
           {{ cargando ? 'Actualizando...' : 'Actualizar' }}
@@ -270,6 +274,48 @@
             <p class="text-sm text-slate-600">{{ alumno.email }}</p>
             <p class="mt-1 text-sm font-semibold text-emerald-700">Puntos: {{ alumno.puntos }}</p>
           </div>
+        </div>
+      </article>
+
+      <article class="panel-card mt-6">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="panel-title mb-0">Evidencias pendientes por aprobar</h2>
+          <span class="visibility-chip" [class.visibility-chip-hidden]="evidenciasPendientesProfesor.length === 0">
+            {{ evidenciasPendientesProfesor.length }} pendientes
+          </span>
+        </div>
+
+        <div *ngIf="evidenciasPendientesProfesor.length === 0" class="empty-state">
+          No hay evidencias pendientes de tus retos.
+        </div>
+
+        <div *ngIf="evidenciasPendientesProfesor.length > 0" class="grid gap-3 sm:grid-cols-2">
+          <article *ngFor="let evidencia of evidenciasPendientesProfesor" class="list-item evidencia-item">
+            <div class="mb-2 flex items-start justify-between gap-2">
+              <p class="font-bold text-slate-900">{{ tituloRetoEvidencia(evidencia) }}</p>
+              <span class="visibility-chip visibility-chip-hidden">Pendiente</span>
+            </div>
+
+            <p class="text-sm text-slate-700">Alumno: <strong>{{ nombreAlumnoEvidencia(evidencia) }}</strong></p>
+            <p class="text-sm text-slate-700" *ngIf="evidencia.puntoRecoleccionNombre || evidencia.puntoRecoleccionCiudad">
+              Punto: <strong>{{ evidencia.puntoRecoleccionNombre || 'Sin nombre' }}</strong>
+              <span *ngIf="evidencia.puntoRecoleccionCiudad"> - {{ evidencia.puntoRecoleccionCiudad }}</span>
+            </p>
+            <p class="text-sm text-slate-600" *ngIf="evidencia.descripcion">{{ evidencia.descripcion }}</p>
+
+            <div *ngIf="evidencia.archivoUrl" class="evidencia-preview-wrap mt-2">
+              <img [src]="evidencia.archivoUrl" alt="Foto de evidencia" class="evidencia-preview-profesor" />
+            </div>
+
+            <div class="mt-3 flex gap-2">
+              <button type="button" class="btn-action-edit" (click)="aprobarEvidenciaPendiente(evidencia)" [disabled]="cargando">
+                Aprobar
+              </button>
+              <button type="button" class="btn-action-delete" (click)="rechazarEvidenciaPendiente(evidencia)" [disabled]="cargando">
+                Rechazar
+              </button>
+            </div>
+          </article>
         </div>
       </article>
     </section>

@@ -22,6 +22,9 @@
           <p class="quiz-progress-label">Progreso del cuestionario</p>
           <p class="quiz-progress-count">{{ preguntasRespondidas }}/{{ preguntas.length }} respondidas ({{ progresoPorcentaje }}%)</p>
         </div>
+        <p class="quiz-progress-hint">
+          Puedes equivocarte en <strong>{{ erroresPermitidos }}</strong> pregunta{{ erroresPermitidos === 1 ? '' : 's' }} para aprobar (60%).
+        </p>
         <div class="quiz-progress-track" role="progressbar" [attr.aria-valuenow]="progresoPorcentaje" aria-valuemin="0" aria-valuemax="100">
           <div class="quiz-progress-fill" [style.width.%]="progresoPorcentaje"></div>
         </div>

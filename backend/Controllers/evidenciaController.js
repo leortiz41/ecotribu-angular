@@ -127,7 +127,14 @@ const obtenerEvidenciaConRelaciones = async (id) => {
 
 const crearEvidencia = async (req, res) => {
   try {
-    const camposPermitidos = ['reto', 'alumno', 'descripcion', 'archivoUrl'];
+    const camposPermitidos = [
+      'reto',
+      'alumno',
+      'descripcion',
+      'archivoUrl',
+      'puntoRecoleccionNombre',
+      'puntoRecoleccionCiudad',
+    ];
     const camposRecibidos = Object.keys(req.body);
     const hayCampoInvalido = camposRecibidos.some((campo) => !camposPermitidos.includes(campo));
 
@@ -138,12 +145,12 @@ const crearEvidencia = async (req, res) => {
       });
     }
 
-    const { reto, alumno, descripcion, archivoUrl } = req.body;
+    const { reto, alumno, descripcion, archivoUrl, puntoRecoleccionNombre, puntoRecoleccionCiudad } = req.body;
 
-    if (!reto || !alumno || !archivoUrl) {
+    if (!reto || !alumno || !archivoUrl || !puntoRecoleccionNombre || !puntoRecoleccionCiudad) {
       return res.status(400).json({
         success: false,
-        message: 'reto, alumno y archivoUrl son obligatorios.',
+        message: 'reto, alumno, archivoUrl, puntoRecoleccionNombre y puntoRecoleccionCiudad son obligatorios.',
       });
     }
 
@@ -182,6 +189,8 @@ const crearEvidencia = async (req, res) => {
       alumno,
       descripcion,
       archivoUrl,
+      puntoRecoleccionNombre: String(puntoRecoleccionNombre).trim(),
+      puntoRecoleccionCiudad: String(puntoRecoleccionCiudad).trim(),
     });
 
     const evidenciaConRelaciones = await obtenerEvidenciaConRelaciones(evidencia._id);

@@ -63,6 +63,10 @@ export class AuthService {
     return this.http.post<RespuestaApi<UsuarioSesion>>(this.usuariosApiUrl, payload);
   }
 
+  cambiarContrasena(usuarioId: string, password: string): Observable<RespuestaApi<UsuarioSesion>> {
+    return this.http.put<RespuestaApi<UsuarioSesion>>(`${this.usuariosApiUrl}/${usuarioId}`, { password });
+  }
+
   obtenerEscuelas(): Observable<RespuestaApi<EscuelaCatalogo[]>> {
     return this.http.get<RespuestaApi<EscuelaCatalogo[]>>(this.escuelasApiUrl);
   }

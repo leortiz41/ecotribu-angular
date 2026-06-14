@@ -17,6 +17,21 @@
   backdrop-filter: blur(4px);
 }
 
+.header-action-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 0.34rem 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.header-action-btn-danger {
+  border-color: rgba(254, 202, 202, 0.6);
+  background: rgba(185, 28, 28, 0.22);
+}
+
 .header-nav-grid {
   display: flex;
   flex-wrap: wrap;

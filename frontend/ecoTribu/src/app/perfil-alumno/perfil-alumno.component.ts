@@ -1,12 +1,16 @@
 import { NgClass, NgFor, NgIf, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
 import { CuestionarioQuizComponent, QuizCompletadoPayload } from '../cuestionario-quiz/cuestionario-quiz.component';
+import { EvidenciaRetoComponent, EvidenciaRetoPayload, PuntoRecoleccionAlumno } from '../evidencia-reto/evidencia-reto.component';
 import {
   CuestionarioDisponibleAlumno,
   ActividadPerfilAlumno,
   MetricaPerfilAlumno,
+  RankingAlumnoEscuela,
   PerfilAlumnoService,
   RetoDisponibleAlumno,
 } from '../services/perfil-alumno.service';
@@ -17,13 +21,14 @@ type FiltroRetoAlumno = 'todos' | 'sin_entregar' | 'pendiente' | 'aprobada' | 'r
 
 @Component({
   selector: 'app-perfil-alumno',
-  imports: [NgFor, NgIf, NgClass, NgOptimizedImage, CuestionarioQuizComponent],
+  imports: [NgFor, NgIf, NgClass, NgOptimizedImage, CuestionarioQuizComponent, EvidenciaRetoComponent],
   templateUrl: './perfil-alumno.component.html',
   styleUrls: ['./perfil-alumno.component.css'],
 })
 export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly perfilAlumnoService = inject(PerfilAlumnoService);
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
 
   sesion: UsuarioSesion | null = null;
@@ -31,14 +36,28 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   actividades: ReadonlyArray<ActividadPerfilAlumno> = [];
   retosDisponibles: ReadonlyArray<RetoDisponibleAlumno> = [];
   cuestionariosDisponibles: ReadonlyArray<CuestionarioDisponibleAlumno> = [];
+  retoSeleccionadoEvidencia: RetoDisponibleAlumno | null = null;
   cuestionarioSeleccionado: CuestionarioDisponibleAlumno | null = null;
   guardandoQuiz = false;
+  enviandoEvidencia = false;
+  puntosRetosAprobados = 0;
+  rankingEscuela: RankingAlumnoEscuela = {
+    miPosicion: null,
+    totalParticipantes: 0,
+    puntosActuales: 0,
+    top: [],
+  };
+  readonly puntosRecoleccionSugeridos: ReadonlyArray<PuntoRecoleccionAlumno>;
   filtroRetoActual: FiltroRetoAlumno = 'todos';
   cargando = true;
   mensajeError: string | null = null;
   mensajeQuiz: string | null = null;
   @ViewChild('actividadChart') private actividadChartCanvas?: ElementRef<HTMLCanvasElement>;
   private actividadChart: Chart | null = null;
+
+  constructor() {
+    this.puntosRecoleccionSugeridos = this.perfilAlumnoService.obtenerPuntosRecoleccionSugeridos();
+  }
 
   get retosFiltrados(): ReadonlyArray<RetoDisponibleAlumno> {
     if (this.filtroRetoActual === 'todos') {
@@ -74,6 +93,44 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.actividadChart?.destroy();
   }
 
+  cerrarSesion(): void {
+    this.authService.cerrarSesionGuardada();
+    this.router.navigate(['/']);
+  }
+
+  cambiarContrasena(): void {
+    if (!this.sesion) {
+      this.mensajeError = 'No hay sesión activa para cambiar la contraseña.';
+      return;
+    }
+
+    const nueva = window.prompt('Ingresa tu nueva contraseña (mínimo 6 caracteres):', '');
+    if (!nueva) {
+      return;
+    }
+
+    if (nueva.trim().length < 6) {
+      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    const confirmar = window.prompt('Confirma tu nueva contraseña:', '');
+    if (confirmar !== nueva) {
+      this.mensajeError = 'La confirmación no coincide con la nueva contraseña.';
+      return;
+    }
+
+    this.authService.cambiarContrasena(this.sesion._id, nueva).subscribe({
+      next: () => {
+        this.mensajeError = null;
+        this.mensajeQuiz = 'Contraseña actualizada correctamente.';
+      },
+      error: () => {
+        this.mensajeError = 'No fue posible actualizar la contraseña.';
+      },
+    });
+  }
+
   cargarReporte(): void {
     this.cargando = true;
     this.mensajeError = null;
@@ -90,20 +147,37 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const escuelaId = this.obtenerEscuelaIdSesion();
+    if (!escuelaId) {
+      this.cargando = false;
+      this.mensajeError = 'No se pudo identificar la escuela del alumno. Cierra sesión e inicia nuevamente.';
+      this.metricas = this.metricasPorDefecto();
+      this.actividades = this.actividadesPorDefecto();
+      this.retosDisponibles = [];
+      this.cuestionariosDisponibles = [];
+      return;
+    }
+
+    const gradoNormalizado = this.normalizarGradoSesion(sesion.grado);
+
     forkJoin({
       reporte: this.perfilAlumnoService.obtenerReporte(sesion._id),
       retosDisponibles: this.perfilAlumnoService.obtenerRetosDisponibles(
         sesion._id,
-        sesion.escuela._id,
-        sesion.grado
+        escuelaId,
+        gradoNormalizado
       ),
-      cuestionariosDisponibles: this.perfilAlumnoService.obtenerCuestionariosDisponibles(sesion.escuela._id, sesion.grado),
+      cuestionariosDisponibles: this.perfilAlumnoService.obtenerCuestionariosDisponibles(escuelaId, gradoNormalizado),
+      puntosRetosAprobados: this.perfilAlumnoService.obtenerPuntosRetosAprobados(sesion._id),
+      rankingEscuela: this.perfilAlumnoService.obtenerRankingEscuela(escuelaId, sesion._id),
     }).subscribe({
-      next: ({ reporte, retosDisponibles, cuestionariosDisponibles }) => {
+      next: ({ reporte, retosDisponibles, cuestionariosDisponibles, puntosRetosAprobados, rankingEscuela }) => {
         this.metricas = reporte.metricas;
         this.actividades = reporte.actividades;
         this.retosDisponibles = retosDisponibles;
         this.cuestionariosDisponibles = cuestionariosDisponibles;
+        this.puntosRetosAprobados = puntosRetosAprobados;
+        this.rankingEscuela = rankingEscuela;
         this.renderizarGraficoActividades();
         this.mensajeQuiz = null;
         this.cargando = false;
@@ -113,6 +187,8 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
         this.actividades = this.actividadesPorDefecto();
         this.retosDisponibles = [];
         this.cuestionariosDisponibles = [];
+        this.puntosRetosAprobados = 0;
+        this.rankingEscuela = { miPosicion: null, totalParticipantes: 0, puntosActuales: 0, top: [] };
         this.mensajeError = 'No fue posible cargar el reporte real del alumno.';
         this.cargando = false;
       },
@@ -206,6 +282,63 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  abrirFormularioEvidencia(reto: RetoDisponibleAlumno): void {
+    this.mensajeError = null;
+    this.mensajeQuiz = null;
+
+    if (reto.estadoAlumno !== 'sin_entregar') {
+      this.mensajeError = 'Este reto ya tiene una evidencia en proceso o revisada.';
+      return;
+    }
+
+    this.retoSeleccionadoEvidencia = reto;
+  }
+
+  cerrarFormularioEvidencia(): void {
+    if (this.enviandoEvidencia) {
+      return;
+    }
+
+    this.retoSeleccionadoEvidencia = null;
+  }
+
+  enviarEvidencia(evento: EvidenciaRetoPayload): void {
+    if (!this.sesion || !this.retoSeleccionadoEvidencia || this.enviandoEvidencia) {
+      return;
+    }
+
+    this.mensajeError = null;
+    this.enviandoEvidencia = true;
+
+    this.perfilAlumnoService
+      .crearEvidencia({
+        reto: this.retoSeleccionadoEvidencia._id,
+        alumno: this.sesion._id,
+        descripcion: evento.descripcion,
+        archivoUrl: evento.archivoUrl,
+        puntoRecoleccionNombre: evento.puntoRecoleccionNombre,
+        puntoRecoleccionCiudad: evento.puntoRecoleccionCiudad,
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoEvidencia = false;
+          this.retoSeleccionadoEvidencia = null;
+          this.mensajeQuiz = 'Evidencia enviada correctamente. Espera la revisión de tu profesor.';
+          this.cargarReporte();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.enviandoEvidencia = false;
+
+          if (error.status === 413) {
+            this.mensajeError = 'La imagen es demasiado pesada. Prueba con una foto mas liviana.';
+            return;
+          }
+
+          this.mensajeError = 'No fue posible enviar la evidencia del reto.';
+        },
+      });
+  }
+
   instruccionCuestionario(cuestionario: CuestionarioDisponibleAlumno): string {
     const modalidad = (cuestionario.modalidad || 'mixto').toLowerCase();
 
@@ -241,13 +374,19 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const escuelaId = this.obtenerEscuelaIdSesion();
+    if (!escuelaId) {
+      this.mensajeError = 'No se pudo guardar el resultado porque falta la escuela del alumno en sesión.';
+      return;
+    }
+
     this.guardandoQuiz = true;
     this.mensajeQuiz = null;
 
     this.perfilAlumnoService
       .registrarResultadoCuestionario(
         this.sesion._id,
-        this.sesion.escuela._id,
+        escuelaId,
         this.cuestionarioSeleccionado,
         evento.respuestas
       )
@@ -282,5 +421,35 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
       { nombre: 'Actividad 4', porcentaje: 0 },
       { nombre: 'Actividad 5', porcentaje: 0 },
     ];
+  }
+
+  private obtenerEscuelaIdSesion(): string | null {
+    const escuelaSesion = this.sesion?.escuela as unknown;
+
+    if (typeof escuelaSesion === 'string') {
+      const valor = escuelaSesion.trim();
+      return valor.length > 0 ? valor : null;
+    }
+
+    if (!escuelaSesion || typeof escuelaSesion !== 'object') {
+      return null;
+    }
+
+    const escuelaObj = escuelaSesion as { _id?: unknown };
+    if (typeof escuelaObj._id !== 'string') {
+      return null;
+    }
+
+    const valor = escuelaObj._id.trim();
+    return valor.length > 0 ? valor : null;
+  }
+
+  private normalizarGradoSesion(grado?: string): string | undefined {
+    if (typeof grado !== 'string') {
+      return undefined;
+    }
+
+    const valor = grado.trim();
+    return valor.length > 0 ? valor : undefined;
   }
 }

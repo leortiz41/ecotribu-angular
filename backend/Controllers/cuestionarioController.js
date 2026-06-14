@@ -65,7 +65,8 @@ const obtenerCuestionarios = async (req, res) => {
     }
 
     if (req.query.grado) {
-      filtro.grado = String(req.query.grado).trim();
+      const grado = String(req.query.grado).trim();
+      filtro.$or = [{ grado }, { grado: { $exists: false } }, { grado: '' }, { grado: null }];
     }
 
     const data = await llenarCuestionario(Cuestionario.find(filtro).sort({ createdAt: -1 }));
