@@ -121,6 +121,8 @@ export interface CuestionarioDisponibleAlumno {
   creadorNombre: string;
   preguntasCantidad: number;
   preguntas: PreguntaCuestionarioAlumno[];
+  yaRealizado: boolean;
+  promedioObtenido?: number;
 }
 
 export interface PreguntaCuestionarioAlumno {
@@ -218,11 +220,37 @@ export class PerfilAlumnoService {
 
   obtenerCuestionariosDisponibles(
     escuelaId: string,
+    alumnoId: string,
     grado?: string
   ): Observable<CuestionarioDisponibleAlumno[]> {
-    return this.obtenerCuestionariosPublicadosEscuela(escuelaId, grado).pipe(
-      map((cuestionarios) =>
-        cuestionarios.map((cuestionario) => ({
+    return forkJoin({
+      cuestionarios: this.obtenerCuestionariosPublicadosEscuela(escuelaId, grado),
+      resultados: this.obtenerResultadosAlumno(alumnoId),
+    }).pipe(
+      map(({ cuestionarios, resultados }) => {
+        const cuestionariosRealizados = new Set<string>();
+        const mejorPorcentajePorCuestionario = new Map<string, number>();
+
+        resultados.forEach((resultado) => {
+          const cuestionarioId = this.extraerCuestionarioId(resultado.cuestionario);
+          if (!cuestionarioId) {
+            return;
+          }
+
+          cuestionariosRealizados.add(cuestionarioId);
+
+          const porcentajeActual = this.normalizarPorcentaje(
+            resultado.porcentaje,
+            resultado.puntajeObtenido,
+            resultado.puntajeMaximo
+          );
+          const mejorPrevio = mejorPorcentajePorCuestionario.get(cuestionarioId) ?? 0;
+          if (porcentajeActual > mejorPrevio) {
+            mejorPorcentajePorCuestionario.set(cuestionarioId, porcentajeActual);
+          }
+        });
+
+        return cuestionarios.map((cuestionario) => ({
           _id: cuestionario._id,
           titulo: cuestionario.titulo,
           descripcion: cuestionario.descripcion,
@@ -231,8 +259,10 @@ export class PerfilAlumnoService {
           creadorNombre: cuestionario.creador?.nombre ?? 'Docente',
           preguntasCantidad: Array.isArray(cuestionario.preguntas) ? cuestionario.preguntas.length : 0,
           preguntas: this.normalizarPreguntas(cuestionario.preguntas),
-        }))
-      ),
+          yaRealizado: cuestionariosRealizados.has(cuestionario._id),
+          promedioObtenido: mejorPorcentajePorCuestionario.get(cuestionario._id),
+        }));
+      }),
       catchError(() => of([]))
     );
   }
@@ -593,5 +623,17 @@ export class PerfilAlumnoService {
     }
 
     return Number(reto.puntos ?? 0);
+  }
+
+  private extraerCuestionarioId(cuestionario?: CuestionarioRelacionado | string): string {
+    if (!cuestionario) {
+      return '';
+    }
+
+    if (typeof cuestionario === 'string') {
+      return cuestionario;
+    }
+
+    return cuestionario._id;
   }
 }

@@ -1,0 +1,38 @@
+<div class="session-actions">
+  <button type="button" class="session-trigger" (click)="toggleMenu()" [disabled]="disabled">
+    <span class="session-avatar">{{ iniciales }}</span>
+    <span class="session-meta">
+      <span class="session-role">{{ roleLabel }}</span>
+      <span class="session-name">{{ displayName }}</span>
+    </span>
+    <span class="session-caret" [class.session-caret-open]="menuOpen">▾</span>
+  </button>
+
+  <div *ngIf="menuOpen" class="session-menu">
+    <button type="button" class="session-menu-item" (click)="abrirCambioContrasena()">Cambiar contraseña</button>
+    <button type="button" class="session-menu-item session-menu-item-danger" (click)="solicitarLogout()">Cerrar sesión</button>
+  </div>
+</div>
+
+<div *ngIf="modalOpen" class="session-modal-backdrop" (click)="cerrarModal()">
+  <article class="session-modal-card" (click)="$event.stopPropagation()">
+    <h3 class="session-modal-title">Cambiar contraseña</h3>
+    <form [formGroup]="passwordForm" (ngSubmit)="enviarCambioContrasena()" class="session-modal-form">
+      <label class="session-label" for="nuevaPassword">Nueva contraseña</label>
+      <input id="nuevaPassword" type="password" class="session-input" formControlName="nueva" />
+
+      <label class="session-label" for="confirmarPassword">Confirmar contraseña</label>
+      <input id="confirmarPassword" type="password" class="session-input" formControlName="confirmar" />
+
+      <p *ngIf="passwordForm.get('confirmar')?.hasError('mismatch')" class="session-error">La confirmación no coincide.</p>
+      <p *ngIf="passwordForm.get('nueva')?.touched && passwordForm.get('nueva')?.hasError('minlength')" class="session-error">
+        La contraseña debe tener al menos 6 caracteres.
+      </p>
+
+      <div class="session-modal-footer">
+        <button type="button" class="session-btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="submit" class="session-btn-primary">Guardar</button>
+      </div>
+    </form>
+  </article>
+</div>

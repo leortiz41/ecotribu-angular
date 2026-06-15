@@ -6,6 +6,7 @@ import { PerfilAdministradorComponent } from './perfil-administrador/perfil-admi
 import { PerfilAlumnoComponent } from './perfil-alumno/perfil-alumno.component';
 import { PerfilProfesorComponent } from './perfil-profesor/perfil-profesor.component';
 import { RegistroComponent } from './registro/registro.component';
+import { EducacionReciclajeComponent } from './educacion-reciclaje/educacion-reciclaje.component';
 
 export const routes: Routes = [
 	{ path: '', component: LoginComponent },
@@ -15,5 +16,7 @@ export const routes: Routes = [
 	{ path: 'perfil-profesor', component: PerfilProfesorComponent },
 	{ path: 'perfil-administrador', component: PerfilAdministradorComponent },
 	{ path: 'escuela', component: EscuelaComponent },
+	{ path: 'educacion-reciclaje', component: EducacionReciclajeComponent },
+	{ path: 'educacionReciclaje', component: EducacionReciclajeComponent },
 	{ path: '**', redirectTo: '' },
 ];

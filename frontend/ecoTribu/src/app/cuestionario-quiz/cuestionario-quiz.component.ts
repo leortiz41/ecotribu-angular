@@ -17,6 +17,7 @@ export interface QuizCompletadoPayload {
 export class CuestionarioQuizComponent implements OnChanges {
   @Input({ required: true }) cuestionario: CuestionarioDisponibleAlumno | null = null;
   @Input() enviando = false;
+  @Input() errorMessage: string | null = null;
 
   @Output() cancelar = new EventEmitter<void>();
   @Output() completar = new EventEmitter<QuizCompletadoPayload>();

@@ -4,7 +4,9 @@ import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
+import { SessionActionsComponent } from '../shared/session-actions/session-actions.component';
 import {
+  ActualizarEvidenciaAdminPayload,
   ActualizarCuestionarioAdminPayload,
   ActualizarEscuelaPayload,
   ActualizarRetoAdminPayload,
@@ -15,6 +17,7 @@ import {
   EvidenciaAdmin,
   EscuelaAdmin,
   MetricaAdministrador,
+  PreguntaCuestionarioAdmin,
   PerfilAdministradorService,
   RetoAdmin,
   UsuarioAdmin,
@@ -35,7 +38,7 @@ type VistaAdmin =
 
 @Component({
   selector: 'app-perfil-administrador',
-  imports: [CommonModule, NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule, RouterLink, SessionActionsComponent],
   templateUrl: './perfil-administrador.component.html',
   styleUrls: ['./perfil-administrador.component.css'],
 })
@@ -61,9 +64,30 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   modalEdicionEscuelaAbierto = false;
   usuarioEnEdicionId: string | null = null;
   modalEdicionUsuarioAbierto = false;
+  retoEnEdicionId: string | null = null;
+  modalEdicionRetoAbierto = false;
+  cuestionarioEnEdicionId: string | null = null;
+  modalEdicionCuestionarioAbierto = false;
   private bloqueoTemporalCierreModalUsuario = false;
+    evidenciaEnValidacionId: string | null = null;
+    modalValidacionEvidenciaAbierto = false;
+    evidenciaEnEdicion: EvidenciaAdmin | null = null;
+    validandoEvidencia = false;
+    mensajeValidacionEvidencia: string | null = null;
   @ViewChild('adminChart') private adminChartCanvas?: ElementRef<HTMLCanvasElement>;
   private adminChart: Chart | null = null;
+
+  // Filtros usuarios
+  filtroUsuarioRol: 'todos' | 'alumno' | 'profesor' | 'administrador' = 'todos';
+  filtroUsuarioNombre = '';
+
+  // Filtros cuestionarios
+  filtroCuestionarioNombre = '';
+  filtroCuestionarioEscuela = '';
+
+  // Filtros escuelas
+  filtroEscuelaNombre = '';
+  filtroEscuelaEstado: 'todas' | 'activa' | 'inactiva' = 'todas';
 
   readonly escuelaForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
@@ -86,6 +110,30 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     grado: [''],
   });
 
+  readonly retoEdicionForm = this.fb.nonNullable.group({
+    titulo: ['', [Validators.required, Validators.minLength(3)]],
+    descripcion: ['', [Validators.required, Validators.minLength(10)]],
+    grado: [''],
+    puntos: [50, [Validators.required, Validators.min(1)]],
+    fechaInicio: ['', Validators.required],
+    fechaFin: ['', Validators.required],
+    estado: ['publicado' as 'borrador' | 'publicado' | 'cerrado', Validators.required],
+  });
+
+  readonly cuestionarioEdicionForm = this.fb.nonNullable.group({
+    titulo: ['', [Validators.required, Validators.minLength(3)]],
+    descripcion: ['', [Validators.required, Validators.minLength(10)]],
+    grado: ['', Validators.required],
+    pregunta: ['', [Validators.required, Validators.minLength(5)]],
+    opcionA: ['', [Validators.required, Validators.minLength(1)]],
+    opcionB: ['', [Validators.required, Validators.minLength(1)]],
+    opcionC: ['', [Validators.required, Validators.minLength(1)]],
+    opcionD: ['', [Validators.required, Validators.minLength(1)]],
+    respuestaCorrecta: [0, [Validators.required, Validators.min(0), Validators.max(3)]],
+    puntaje: [1, [Validators.required, Validators.min(1)]],
+    estado: ['publicado' as 'borrador' | 'publicado' | 'cerrado', Validators.required],
+  });
+
   get usuariosActivos(): number {
     return this.usuarios.filter((u) => u.activo).length;
   }
@@ -104,6 +152,34 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   get cuestionariosActivos(): CuestionarioAdmin[] {
     return this.cuestionarios.filter((c) => c.estado === 'publicado').slice(0, 10);
+  }
+
+  get usuariosFiltrados(): UsuarioAdmin[] {
+    const nombreLower = this.filtroUsuarioNombre.trim().toLowerCase();
+    return this.usuarios.filter((u) => {
+      const coincideRol = this.filtroUsuarioRol === 'todos' || u.rol === this.filtroUsuarioRol;
+      const coincideNombre = !nombreLower || u.nombre.toLowerCase().includes(nombreLower) || u.email.toLowerCase().includes(nombreLower);
+      return coincideRol && coincideNombre;
+    });
+  }
+
+  get cuestionariosFiltrados(): CuestionarioAdmin[] {
+    const nombreLower = this.filtroCuestionarioNombre.trim().toLowerCase();
+    const escuelaLower = this.filtroCuestionarioEscuela.trim().toLowerCase();
+    return this.cuestionarios.filter((c) => {
+      const coincideNombre = !nombreLower || c.titulo.toLowerCase().includes(nombreLower);
+      const coincideEscuela = !escuelaLower || (c.escuela?.nombre ?? '').toLowerCase().includes(escuelaLower);
+      return coincideNombre && coincideEscuela;
+    });
+  }
+
+  get escuelasFiltradas(): EscuelaAdmin[] {
+    const nombreLower = this.filtroEscuelaNombre.trim().toLowerCase();
+    return this.escuelas.filter((e) => {
+      const coincideNombre = !nombreLower || e.nombre.toLowerCase().includes(nombreLower) || (e.codigo ?? '').toLowerCase().includes(nombreLower);
+      const coincideEstado = this.filtroEscuelaEstado === 'todas' || (this.filtroEscuelaEstado === 'activa' ? e.activa : !e.activa);
+      return coincideNombre && coincideEstado;
+    });
   }
 
   get profesoresSistema(): UsuarioAdmin[] {
@@ -153,28 +229,12 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   cerrarSesion(): void {
     this.authService.cerrarSesionGuardada();
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { replaceUrl: true });
   }
 
-  cambiarContrasena(): void {
+  cambiarContrasena(nueva: string): void {
     if (!this.sesion) {
       this.mensajeError = 'No hay sesión activa para cambiar la contraseña.';
-      return;
-    }
-
-    const nueva = window.prompt('Ingresa tu nueva contraseña (mínimo 6 caracteres):', '');
-    if (!nueva) {
-      return;
-    }
-
-    if (nueva.trim().length < 6) {
-      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-
-    const confirmar = window.prompt('Confirma tu nueva contraseña:', '');
-    if (confirmar !== nueva) {
-      this.mensajeError = 'La confirmación no coincide con la nueva contraseña.';
       return;
     }
 
@@ -509,16 +569,87 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   editarReto(reto: RetoAdmin): void {
-    const titulo = window.prompt('Nuevo título del reto:', reto.titulo)?.trim();
-    if (!titulo) {
+    this.retoEnEdicionId = reto._id;
+    this.modalEdicionRetoAbierto = true;
+    this.mensajeError = null;
+    this.mensajeAccion = `Editando reto: ${reto.titulo}`;
+
+    this.retoEdicionForm.reset({
+      titulo: reto.titulo ?? '',
+      descripcion: reto.descripcion ?? '',
+      grado: reto.grado ?? '',
+      puntos: reto.puntos ?? 50,
+      fechaInicio: this.convertirFechaParaFormulario(reto.fechaInicio),
+      fechaFin: this.convertirFechaParaFormulario(reto.fechaFin),
+      estado: reto.estado ?? 'publicado',
+    });
+
+    this.perfilAdminService.obtenerRetoPorId(reto._id).subscribe({
+      next: (response) => {
+        const data = response.data;
+        if (!data) {
+          return;
+        }
+
+        this.retoEdicionForm.patchValue({
+          titulo: data.titulo ?? '',
+          descripcion: data.descripcion ?? '',
+          grado: data.grado ?? '',
+          puntos: data.puntos ?? 50,
+          fechaInicio: this.convertirFechaParaFormulario(data.fechaInicio),
+          fechaFin: this.convertirFechaParaFormulario(data.fechaFin),
+          estado: data.estado ?? 'publicado',
+        });
+      },
+      error: () => {
+        this.mensajeError = 'No fue posible cargar todos los datos del reto. Puedes editar los campos visibles.';
+      },
+    });
+  }
+
+  cerrarModalEdicionReto(): void {
+    this.retoEnEdicionId = null;
+    this.modalEdicionRetoAbierto = false;
+    this.retoEdicionForm.reset({
+      titulo: '',
+      descripcion: '',
+      grado: '',
+      puntos: 50,
+      fechaInicio: '',
+      fechaFin: '',
+      estado: 'publicado',
+    });
+    this.mensajeAccion = 'Edición de reto cancelada.';
+  }
+
+  actualizarRetoDesdeFormulario(): void {
+    if (!this.retoEnEdicionId) {
       return;
     }
 
-    const payload: ActualizarRetoAdminPayload = { titulo };
+    if (this.retoEdicionForm.invalid) {
+      this.retoEdicionForm.markAllAsTouched();
+      return;
+    }
+
+    const value = this.retoEdicionForm.getRawValue();
+    const payload: ActualizarRetoAdminPayload = {
+      titulo: value.titulo.trim(),
+      descripcion: value.descripcion.trim(),
+      grado: value.grado.trim() || undefined,
+      puntos: Number(value.puntos),
+      fechaInicio: value.fechaInicio,
+      fechaFin: value.fechaFin,
+      estado: value.estado,
+      categoria: 'otro',
+      dificultad: 'media',
+    };
+
     this.cargando = true;
-    this.perfilAdminService.actualizarReto(reto._id, payload).subscribe({
+    this.perfilAdminService.actualizarReto(this.retoEnEdicionId, payload).subscribe({
       next: () => {
         this.mensajeAccion = 'Reto actualizado correctamente.';
+        this.cerrarModalEdicionReto();
         this.refrescarDatos();
       },
       error: () => {
@@ -548,16 +679,107 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   }
 
   editarCuestionario(cuestionario: CuestionarioAdmin): void {
-    const titulo = window.prompt('Nuevo título del cuestionario:', cuestionario.titulo)?.trim();
-    if (!titulo) {
+    this.cuestionarioEnEdicionId = cuestionario._id;
+    this.modalEdicionCuestionarioAbierto = true;
+    this.mensajeError = null;
+    this.mensajeAccion = `Editando cuestionario: ${cuestionario.titulo}`;
+
+    this.cuestionarioEdicionForm.reset({
+      titulo: cuestionario.titulo ?? '',
+      descripcion: cuestionario.descripcion ?? '',
+      grado: cuestionario.grado ?? '',
+      pregunta: '',
+      opcionA: '',
+      opcionB: '',
+      opcionC: '',
+      opcionD: '',
+      respuestaCorrecta: 0,
+      puntaje: 1,
+      estado: cuestionario.estado ?? 'publicado',
+    });
+
+    this.perfilAdminService.obtenerCuestionarioPorId(cuestionario._id).subscribe({
+      next: (response) => {
+        const data = response.data;
+        if (!data) {
+          return;
+        }
+
+        const primeraPregunta = data.preguntas?.[0];
+        this.cuestionarioEdicionForm.patchValue({
+          titulo: data.titulo ?? '',
+          descripcion: data.descripcion ?? '',
+          grado: data.grado ?? '',
+          pregunta: primeraPregunta?.enunciado ?? '',
+          opcionA: primeraPregunta?.opciones?.[0] ?? '',
+          opcionB: primeraPregunta?.opciones?.[1] ?? '',
+          opcionC: primeraPregunta?.opciones?.[2] ?? '',
+          opcionD: primeraPregunta?.opciones?.[3] ?? '',
+          respuestaCorrecta: this.obtenerIndiceRespuestaCorrecta(primeraPregunta),
+          puntaje: primeraPregunta?.puntaje ?? 1,
+          estado: data.estado ?? 'publicado',
+        });
+      },
+      error: () => {
+        this.mensajeError = 'No fue posible cargar todas las preguntas del cuestionario. Completa los campos para actualizar.';
+      },
+    });
+  }
+
+  cerrarModalEdicionCuestionario(): void {
+    this.cuestionarioEnEdicionId = null;
+    this.modalEdicionCuestionarioAbierto = false;
+    this.cuestionarioEdicionForm.reset({
+      titulo: '',
+      descripcion: '',
+      grado: '',
+      pregunta: '',
+      opcionA: '',
+      opcionB: '',
+      opcionC: '',
+      opcionD: '',
+      respuestaCorrecta: 0,
+      puntaje: 1,
+      estado: 'publicado',
+    });
+    this.mensajeAccion = 'Edición de cuestionario cancelada.';
+  }
+
+  actualizarCuestionarioDesdeFormulario(): void {
+    if (!this.cuestionarioEnEdicionId) {
       return;
     }
 
-    const payload: ActualizarCuestionarioAdminPayload = { titulo };
+    if (this.cuestionarioEdicionForm.invalid) {
+      this.cuestionarioEdicionForm.markAllAsTouched();
+      return;
+    }
+
+    const value = this.cuestionarioEdicionForm.getRawValue();
+    const preguntas: PreguntaCuestionarioAdmin[] = [
+      {
+        enunciado: value.pregunta.trim(),
+        tipo: 'seleccion_unica',
+        opciones: [value.opcionA.trim(), value.opcionB.trim(), value.opcionC.trim(), value.opcionD.trim()],
+        respuestaCorrecta: Number(value.respuestaCorrecta),
+        puntaje: Number(value.puntaje),
+      },
+    ];
+
+    const payload: ActualizarCuestionarioAdminPayload = {
+      titulo: value.titulo.trim(),
+      descripcion: value.descripcion.trim(),
+      grado: value.grado.trim(),
+      modalidad: 'mixto',
+      preguntas,
+      estado: value.estado,
+    };
+
     this.cargando = true;
-    this.perfilAdminService.actualizarCuestionario(cuestionario._id, payload).subscribe({
+    this.perfilAdminService.actualizarCuestionario(this.cuestionarioEnEdicionId, payload).subscribe({
       next: () => {
         this.mensajeAccion = 'Cuestionario actualizado correctamente.';
+        this.cerrarModalEdicionCuestionario();
         this.refrescarDatos();
       },
       error: () => {
@@ -582,6 +804,65 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
       error: () => {
         this.cargando = false;
         this.mensajeError = 'No fue posible desactivar el cuestionario.';
+      },
+    });
+  }
+
+  abrirValidacionEvidencia(evidencia: EvidenciaAdmin): void {
+    this.evidenciaEnValidacionId = evidencia._id;
+    this.evidenciaEnEdicion = evidencia;
+    this.modalValidacionEvidenciaAbierto = true;
+    this.mensajeValidacionEvidencia = null;
+  }
+
+  cerrarModalValidacionEvidencia(): void {
+    this.evidenciaEnValidacionId = null;
+    this.evidenciaEnEdicion = null;
+    this.modalValidacionEvidenciaAbierto = false;
+    this.validandoEvidencia = false;
+    this.mensajeValidacionEvidencia = null;
+  }
+
+  validarEvidencia(estado: 'aprobada' | 'rechazada', comentario: string = ''): void {
+    if (!this.evidenciaEnValidacionId) {
+      this.mensajeError = 'No hay evidencia seleccionada.';
+      return;
+    }
+
+    const comentarioLimpio = comentario.trim();
+    if (estado === 'rechazada' && !comentarioLimpio) {
+      this.mensajeValidacionEvidencia = 'El comentario es obligatorio para rechazar una evidencia.';
+      return;
+    }
+
+    if (!this.sesion?._id) {
+      this.mensajeValidacionEvidencia = 'No hay sesión activa para registrar el revisor.';
+      return;
+    }
+
+    this.mensajeError = null;
+    this.mensajeValidacionEvidencia = null;
+    this.validandoEvidencia = true;
+
+    const payload: ActualizarEvidenciaAdminPayload = {
+      revisor: this.sesion._id,
+      comentarioRevision: comentarioLimpio || undefined,
+    };
+
+    const solicitud =
+      estado === 'aprobada'
+        ? this.perfilAdminService.aprobarEvidencia(this.evidenciaEnValidacionId, payload)
+        : this.perfilAdminService.rechazarEvidencia(this.evidenciaEnValidacionId, payload);
+
+    solicitud.subscribe({
+      next: () => {
+        this.mensajeAccion = `Evidencia ${estado === 'aprobada' ? 'aprobada' : 'rechazada'} correctamente.`;
+        this.cerrarModalValidacionEvidencia();
+        this.refrescarDatos();
+      },
+      error: (error: unknown) => {
+        this.validandoEvidencia = false;
+        this.mensajeValidacionEvidencia = this.obtenerMensajeErrorApi(error, 'No fue posible validar la evidencia.');
       },
     });
   }
@@ -648,6 +929,89 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   private programarRenderGraficoAdmin(): void {
     setTimeout(() => this.renderizarGraficoAdmin(), 0);
+  }
+
+  private convertirFechaParaFormulario(fecha?: string | Date | null): string {
+    if (!fecha) {
+      return '';
+    }
+
+    const fechaObjeto = new Date(fecha);
+    if (Number.isNaN(fechaObjeto.getTime())) {
+      return '';
+    }
+
+    return fechaObjeto.toISOString().slice(0, 10);
+  }
+
+  private obtenerIndiceRespuestaCorrecta(pregunta?: PreguntaCuestionarioAdmin): number {
+    if (!pregunta) {
+      return 0;
+    }
+
+    if (typeof pregunta.respuestaCorrecta === 'number') {
+      return pregunta.respuestaCorrecta;
+    }
+
+    if (Array.isArray(pregunta.respuestaCorrecta) && pregunta.respuestaCorrecta.length > 0) {
+      const primerIndice = pregunta.respuestaCorrecta[0];
+      return typeof primerIndice === 'number' ? primerIndice : 0;
+    }
+
+    return 0;
+  }
+
+  tipoEvidencia(archivoUrl?: string): string {
+    if (!archivoUrl) {
+      return 'No disponible';
+    }
+
+    const urlLimpia = archivoUrl.split('?')[0].toLowerCase();
+    if (urlLimpia.endsWith('.jpg') || urlLimpia.endsWith('.jpeg') || urlLimpia.endsWith('.png') || urlLimpia.endsWith('.webp')) {
+      return 'Imagen';
+    }
+
+    if (urlLimpia.endsWith('.pdf')) {
+      return 'PDF';
+    }
+
+    if (urlLimpia.endsWith('.mp4') || urlLimpia.endsWith('.mov') || urlLimpia.endsWith('.avi')) {
+      return 'Video';
+    }
+
+    if (urlLimpia.endsWith('.doc') || urlLimpia.endsWith('.docx')) {
+      return 'Documento Word';
+    }
+
+    return 'Archivo';
+  }
+
+  esEnlaceExterno(archivoUrl?: string): boolean {
+    if (!archivoUrl) {
+      return false;
+    }
+
+    return /^https?:\/\//i.test(archivoUrl);
+  }
+
+  esDataUriImagen(archivoUrl?: string): boolean {
+    if (!archivoUrl) {
+      return false;
+    }
+
+    return /^data:image\//i.test(archivoUrl);
+  }
+
+  resumenArchivo(archivoUrl?: string): string {
+    if (!archivoUrl) {
+      return 'Sin archivo';
+    }
+
+    if (archivoUrl.length <= 90) {
+      return archivoUrl;
+    }
+
+    return `${archivoUrl.slice(0, 45)}...${archivoUrl.slice(-25)}`;
   }
 
   private sincronizarScrollBodyConModalUsuario(): void {

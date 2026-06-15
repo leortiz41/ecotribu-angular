@@ -85,6 +85,7 @@
     </section>
 
     <footer class="quiz-footer">
+      <p *ngIf="errorMessage" class="quiz-submit-error">{{ errorMessage }}</p>
       <button type="button" class="quiz-btn-secondary" (click)="cerrar()" [disabled]="enviando">Cancelar</button>
       <button type="button" class="quiz-btn-primary" (click)="enviarRespuestas()" [disabled]="!puedeEnviar || enviando">
         {{ enviando ? 'Guardando...' : 'Finalizar cuestionario' }}

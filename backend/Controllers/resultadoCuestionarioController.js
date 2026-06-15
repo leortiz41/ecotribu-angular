@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const ResultadoCuestionario = require('../Model/resultadoCuestionarioModel');
+const Cuestionario = require('../Model/cuestionarioModel');
+const Usuario = require('../Model/usuarioModel');
+const Escuela = require('../Model/escuelaModel');
 const { crearManejadorErroresMongoose } = require('../utils/mongooseErrorHandler');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -27,16 +30,105 @@ const crearResultadoCuestionario = async (req, res) => {
       });
     }
 
+    if (!isValidObjectId(cuestionario) || !isValidObjectId(alumno) || !isValidObjectId(escuela)) {
+      return res.status(400).json({
+        success: false,
+        message: 'cuestionario, alumno o escuela tienen formato de id invalido.',
+      });
+    }
+
+    const [cuestionarioValido, alumnoValido, escuelaValida] = await Promise.all([
+      Cuestionario.findOne({ _id: cuestionario, activo: true }).select('escuela estado titulo'),
+      Usuario.findOne({ _id: alumno, activo: true }).select('rol escuela puntos'),
+      Escuela.findOne({ _id: escuela, activa: true }).select('nombre'),
+    ]);
+
+    if (!cuestionarioValido) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cuestionario no encontrado o inactivo.',
+      });
+    }
+
+    if (!alumnoValido) {
+      return res.status(404).json({
+        success: false,
+        message: 'Alumno no encontrado o inactivo.',
+      });
+    }
+
+    if (alumnoValido.rol !== 'alumno') {
+      return res.status(403).json({
+        success: false,
+        message: 'Solo usuarios con rol alumno pueden registrar resultados.',
+      });
+    }
+
+    if (!escuelaValida) {
+      return res.status(404).json({
+        success: false,
+        message: 'Escuela no encontrada o inactiva.',
+      });
+    }
+
+    if (String(cuestionarioValido.escuela) !== String(escuela) || String(alumnoValido.escuela) !== String(escuela)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El cuestionario, alumno y escuela deben pertenecer a la misma escuela.',
+      });
+    }
+
+    if (cuestionarioValido.estado !== 'publicado') {
+      return res.status(400).json({
+        success: false,
+        message: 'Solo se pueden registrar resultados de cuestionarios publicados.',
+      });
+    }
+
+    const puntajeNumerico = Number(puntajeObtenido);
+    const maximoNumerico = Number(puntajeMaximo);
+
+    if (Number.isNaN(puntajeNumerico) || Number.isNaN(maximoNumerico) || puntajeNumerico < 0 || maximoNumerico < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'puntajeObtenido y puntajeMaximo deben ser numeros validos mayores o iguales a cero.',
+      });
+    }
+
+    if (puntajeNumerico > maximoNumerico) {
+      return res.status(400).json({
+        success: false,
+        message: 'puntajeObtenido no puede ser mayor que puntajeMaximo.',
+      });
+    }
+
+    const mejorResultadoPrevio = await ResultadoCuestionario.findOne({
+      cuestionario,
+      alumno,
+      activo: true,
+    })
+      .sort({ puntajeObtenido: -1 })
+      .select('puntajeObtenido');
+
     const resultado = await ResultadoCuestionario.create({
       ...req.body,
+      puntajeObtenido: puntajeNumerico,
+      puntajeMaximo: maximoNumerico,
       respuestas: Array.isArray(req.body.respuestas) ? req.body.respuestas : [],
     });
+
+    const mejorPrevio = Number(mejorResultadoPrevio?.puntajeObtenido ?? 0);
+    const puntosNuevos = Math.max(0, puntajeNumerico - mejorPrevio);
+
+    if (puntosNuevos > 0) {
+      await Usuario.findByIdAndUpdate(alumno, { $inc: { puntos: puntosNuevos } }, { new: true, runValidators: true });
+    }
 
     const data = await llenarResultadoCuestionario(ResultadoCuestionario.findById(resultado._id));
 
     return res.status(201).json({
       success: true,
-      message: 'Resultado de cuestionario creado correctamente.',
+      message: `Resultado de cuestionario creado correctamente. Puntos sumados: ${puntosNuevos}.`,
       data,
     });
   } catch (error) {

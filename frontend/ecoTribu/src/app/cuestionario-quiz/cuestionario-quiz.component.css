@@ -215,6 +215,14 @@
   gap: 0.6rem;
   border-top: 1px solid rgba(148, 163, 184, 0.24);
   padding: 0.8rem 1rem 1rem;
+  align-items: center;
+}
+
+.quiz-submit-error {
+  margin: 0 auto 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #b91c1c;
 }
 
 .quiz-btn-secondary,

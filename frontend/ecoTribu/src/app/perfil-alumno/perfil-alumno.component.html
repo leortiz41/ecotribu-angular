@@ -2,7 +2,7 @@
   <div class="ambient ambient-top"></div>
   <div class="ambient ambient-bottom"></div>
 
-  <header class="bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
+  <header class="sticky top-0 z-30 bg-emerald-700 px-6 py-6 text-white shadow-[0_8px_26px_rgba(12,95,69,0.22)] sm:px-10">
     <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="rounded-lg bg-white/15 p-1.5 ring-1 ring-white/25">
@@ -12,8 +12,12 @@
       </div>
       <div class="flex flex-wrap items-center justify-end gap-2">
         <p class="text-base font-semibold tracking-wide sm:text-2xl">Perfil del Alumno</p>
-        <button type="button" class="header-action-btn" (click)="cambiarContrasena()">Cambiar contraseña</button>
-        <button type="button" class="header-action-btn header-action-btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
+        <app-session-actions
+          [displayName]="sesion?.nombre || 'Alumno'"
+          roleLabel="Alumno"
+          (cambiarContrasena)="cambiarContrasena($event)"
+          (cerrarSesion)="cerrarSesion()"
+        ></app-session-actions>
       </div>
     </div>
   </header>
@@ -43,40 +47,23 @@
       {{ mensajeQuiz }}
     </div>
 
-    <article class="filter-surface mb-6 rounded-[2rem] bg-gradient-to-br from-cyan-100 via-cyan-50 to-amber-100 px-5 py-6 shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:px-8 sm:py-7">
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
+    <article class="filter-surface mb-6 rounded-4xl bg-gradient-to-br from-cyan-100 via-cyan-50 to-amber-100 px-5 py-6 shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:px-8 sm:py-7">
+      <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p class="pt-2 text-lg font-black text-emerald-700 sm:text-2xl">Panel del Alumno</p>
           <p class="mt-1 text-sm text-emerald-700/80">Consulta tu avance actualizado</p>
         </div>
 
-        <label class="block">
-          <span class="mb-1 block text-xl font-black text-emerald-700">Alumno</span>
-          <select class="field-select" disabled>
-            <option>{{ sesion?.nombre || 'Actual' }}</option>
-          </select>
-        </label>
-
+      
         <label class="block">
           <span class="mb-1 block text-xl font-black text-emerald-700">Centro educativo</span>
-          <select class="field-select" disabled>
             <option>{{ sesion?.escuela?.nombre || 'Escuela' }}</option>
-          </select>
         </label>
 
-        <label class="block">
-          <span class="mb-1 block text-xl font-black text-emerald-700">Estado de retos</span>
-          <select class="field-select" [value]="filtroRetoActual" (change)="cambiarFiltroRetos($any($event.target).value)">
-            <option value="todos">Todos</option>
-            <option value="sin_entregar">Sin entregar</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="aprobada">Aprobada</option>
-            <option value="rechazada">Rechazada</option>
-          </select>
-        </label>
+       
 
-        <button type="button" class="btn-generate h-14 rounded-2xl px-9 text-2xl font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
-          {{ cargando ? 'Cargando...' : 'Generar' }}
+        <button type="button" class="btn-generate  h-14 rounded-2xl px-8 text-2xl font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
+          {{ cargando ? 'Cargando...' : 'Actualizar' }}
         </button>
       </div>
 
@@ -198,7 +185,7 @@
       </div>
     </article>
 
-    <article id="seccion-cuestionarios-alumno" class="mt-6 rounded-[2rem] border border-cyan-200 bg-white/90 px-5 py-6 shadow-[0_10px_24px_rgba(15,23,42,0.08)] sm:px-8">
+    <article id="seccion-cuestionarios-alumno" class="scroll-mt-40 mt-6 rounded-[2rem] border border-cyan-200 bg-white/90 px-5 py-6 shadow-[0_10px_24px_rgba(15,23,42,0.08)] sm:px-8">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 class="text-2xl font-black text-cyan-800 sm:text-3xl">Cuestionarios disponibles en mi escuela</h2>
         <span class="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-bold text-cyan-800">
@@ -224,6 +211,10 @@
             <p>Docente: <span class="text-cyan-700">{{ cuestionario.creadorNombre }}</span></p>
             <p *ngIf="cuestionario.grado">Grado: <span class="text-cyan-700">{{ cuestionario.grado }}</span></p>
             <p>Modalidad: <span class="text-cyan-700">{{ cuestionario.modalidad || 'mixto' }}</span></p>
+            <p *ngIf="cuestionario.yaRealizado">Estado: <span class="text-emerald-700">Ya realizado</span></p>
+            <p *ngIf="cuestionario.yaRealizado && cuestionario.promedioObtenido !== undefined">
+              Promedio: <span class="text-emerald-700">{{ cuestionario.promedioObtenido }}%</span>
+            </p>
           </div>
 
           <div class="task-hint task-hint-cuestionario mt-3">
@@ -236,9 +227,13 @@
               type="button"
               class="quiz-start-btn"
               (click)="abrirQuiz(cuestionario)"
-              [disabled]="cuestionario.preguntasCantidad === 0"
+              [disabled]="cuestionario.preguntasCantidad === 0 || cuestionario.yaRealizado"
             >
-              {{ cuestionario.preguntasCantidad === 0 ? 'Sin preguntas' : 'Iniciar quiz' }}
+              {{
+                cuestionario.preguntasCantidad === 0
+                  ? 'Sin preguntas'
+                  : (cuestionario.yaRealizado ? 'Ya realizado' : 'Iniciar quiz')
+              }}
             </button>
           </div>
         </article>
@@ -249,6 +244,7 @@
       *ngIf="cuestionarioSeleccionado"
       [cuestionario]="cuestionarioSeleccionado"
       [enviando]="guardandoQuiz"
+      [errorMessage]="mensajeErrorQuizModal"
       (cancelar)="cerrarQuiz()"
       (completar)="completarQuiz($event)"
     ></app-cuestionario-quiz>

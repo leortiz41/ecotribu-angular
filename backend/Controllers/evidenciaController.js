@@ -5,7 +5,7 @@ const Usuario = require('../Model/usuarioModel');
 const { crearManejadorErroresMongoose } = require('../utils/mongooseErrorHandler');
 
 const estadosPermitidos = ['pendiente', 'aprobada', 'rechazada'];
-const rolesRevisorPermitidos = ['profesor', 'administrador'];
+const rolesRevisorPermitidos = ['profesor', 'administrador', 'admin'];
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -95,7 +95,10 @@ const validarRevisor = async (revisorId, res) => {
     return null;
   }
 
-  if (!rolesRevisorPermitidos.includes(revisor.rol)) {
+  const rolNormalizado = String(revisor.rol || '').trim().toLowerCase();
+  const rolCanonico = rolNormalizado === 'administrador/a' ? 'administrador' : rolNormalizado;
+
+  if (!rolesRevisorPermitidos.includes(rolCanonico)) {
     res.status(403).json({
       success: false,
       message: 'Solo profesores o administradores pueden revisar evidencias.',

@@ -24,15 +24,34 @@ export interface UsuarioAdmin {
 export interface RetoAdmin {
   _id: string;
   titulo: string;
+  descripcion?: string;
+  grado?: string;
+  puntos?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
   estado: 'borrador' | 'publicado' | 'cerrado';
   escuela: { _id: string; nombre: string };
+  creador?: { _id: string; nombre?: string };
+}
+
+export interface PreguntaCuestionarioAdmin {
+  enunciado: string;
+  tipo: 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  opciones?: string[];
+  respuestaCorrecta: number | number[] | string;
+  puntaje?: number;
 }
 
 export interface CuestionarioAdmin {
   _id: string;
   titulo: string;
+  descripcion?: string;
+  grado?: string;
+  modalidad?: 'mixto' | 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  preguntas?: PreguntaCuestionarioAdmin[];
   estado: 'borrador' | 'publicado' | 'cerrado';
   escuela: { _id: string; nombre: string };
+  creador?: { _id: string; nombre?: string };
 }
 
 export interface MetricaAdministrador {
@@ -45,10 +64,19 @@ export interface EvidenciaAdmin {
   estado: 'pendiente' | 'aprobada' | 'rechazada';
   descripcion?: string;
   archivoUrl?: string;
+  puntoRecoleccionNombre?: string;
+  puntoRecoleccionCiudad?: string;
+  comentarioRevision?: string;
   createdAt?: string;
   reto?: { _id: string; titulo: string };
   alumno?: { _id: string; nombre: string; email?: string };
   revisadoPor?: { _id: string; nombre: string; rol?: string };
+  fechaRevision?: string;
+}
+
+export interface ActualizarEvidenciaAdminPayload {
+  revisor: string;
+  comentarioRevision?: string;
 }
 
 export interface CrearEscuelaPayload {
@@ -85,6 +113,14 @@ export interface ActualizarUsuarioAdminPayload {
 export interface ActualizarRetoAdminPayload {
   titulo?: string;
   descripcion?: string;
+  grado?: string;
+  puntos?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
+  categoria?: 'reciclaje' | 'reutilizacion' | 'limpieza' | 'ahorro_agua' | 'ahorro_energia' | 'otro';
+  dificultad?: 'facil' | 'media' | 'dificil';
+  escuela?: string;
+  creador?: string;
   estado?: 'borrador' | 'publicado' | 'cerrado';
   activo?: boolean;
 }
@@ -92,6 +128,9 @@ export interface ActualizarRetoAdminPayload {
 export interface ActualizarCuestionarioAdminPayload {
   titulo?: string;
   descripcion?: string;
+  grado?: string;
+  modalidad?: 'mixto' | 'seleccion_unica' | 'seleccion_multiple' | 'verdadero_falso' | 'completacion' | 'respuesta_corta';
+  preguntas?: PreguntaCuestionarioAdmin[];
   estado?: 'borrador' | 'publicado' | 'cerrado';
   activo?: boolean;
 }
@@ -233,6 +272,10 @@ export class PerfilAdministradorService {
     return this.http.put<RespuestaApi<RetoAdmin>>(`${this.retosApiUrl}/${id}`, payload);
   }
 
+  obtenerRetoPorId(id: string): Observable<RespuestaApi<RetoAdmin>> {
+    return this.http.get<RespuestaApi<RetoAdmin>>(`${this.retosApiUrl}/${id}`);
+  }
+
   eliminarReto(id: string): Observable<RespuestaApi<RetoAdmin>> {
     return this.http.delete<RespuestaApi<RetoAdmin>>(`${this.retosApiUrl}/${id}`);
   }
@@ -241,7 +284,23 @@ export class PerfilAdministradorService {
     return this.http.put<RespuestaApi<CuestionarioAdmin>>(`${this.cuestionariosApiUrl}/${id}`, payload);
   }
 
+  obtenerCuestionarioPorId(id: string): Observable<RespuestaApi<CuestionarioAdmin>> {
+    return this.http.get<RespuestaApi<CuestionarioAdmin>>(`${this.cuestionariosApiUrl}/${id}`);
+  }
+
   eliminarCuestionario(id: string): Observable<RespuestaApi<CuestionarioAdmin>> {
     return this.http.delete<RespuestaApi<CuestionarioAdmin>>(`${this.cuestionariosApiUrl}/${id}`);
+  }
+
+  obtenerEvidenciaPorId(id: string): Observable<RespuestaApi<EvidenciaAdmin>> {
+    return this.http.get<RespuestaApi<EvidenciaAdmin>>(`${this.evidenciasApiUrl}/${id}`);
+  }
+
+  aprobarEvidencia(id: string, payload: ActualizarEvidenciaAdminPayload): Observable<RespuestaApi<EvidenciaAdmin>> {
+    return this.http.patch<RespuestaApi<EvidenciaAdmin>>(`${this.evidenciasApiUrl}/${id}/aprobar`, payload);
+  }
+
+  rechazarEvidencia(id: string, payload: ActualizarEvidenciaAdminPayload): Observable<RespuestaApi<EvidenciaAdmin>> {
+    return this.http.patch<RespuestaApi<EvidenciaAdmin>>(`${this.evidenciasApiUrl}/${id}/rechazar`, payload);
   }
 }

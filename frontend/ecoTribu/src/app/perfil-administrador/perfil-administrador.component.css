@@ -187,10 +187,12 @@
 }
 
 .list-item {
+  display: block;
   border-radius: 0.8rem;
   border: 1px solid rgba(16, 185, 129, 0.2);
   background: rgba(248, 250, 252, 0.95);
   padding: 0.75rem;
+  list-style: none;
 }
 
 .empty-state {
@@ -200,6 +202,61 @@
   padding: 0.95rem;
   font-size: 0.95rem;
   color: #475569;
+}
+
+.admin-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-filter-input {
+  flex: 1;
+  min-width: 160px;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  border-radius: 0.65rem;
+  background: rgba(248, 250, 252, 0.95);
+  padding: 0.42rem 0.65rem;
+  font-size: 0.82rem;
+  color: #0f172a;
+}
+
+.admin-filter-chips {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  background: rgba(248, 250, 252, 0.9);
+  color: #475569;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 140ms ease;
+}
+
+.filter-chip:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.08);
+  color: #047857;
+}
+
+.filter-chip-active {
+  border-color: rgba(16, 185, 129, 0.65);
+  background: rgba(16, 185, 129, 0.14);
+  color: #065f46;
+}
+
+.admin-filter-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+  margin-left: auto;
 }
 
 .btn-action-edit,

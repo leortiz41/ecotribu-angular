@@ -4,6 +4,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, V
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
+import { SessionActionsComponent } from '../shared/session-actions/session-actions.component';
 import { CuestionarioQuizComponent, QuizCompletadoPayload } from '../cuestionario-quiz/cuestionario-quiz.component';
 import { EvidenciaRetoComponent, EvidenciaRetoPayload, PuntoRecoleccionAlumno } from '../evidencia-reto/evidencia-reto.component';
 import {
@@ -21,7 +22,7 @@ type FiltroRetoAlumno = 'todos' | 'sin_entregar' | 'pendiente' | 'aprobada' | 'r
 
 @Component({
   selector: 'app-perfil-alumno',
-  imports: [NgFor, NgIf, NgClass, NgOptimizedImage, CuestionarioQuizComponent, EvidenciaRetoComponent],
+  imports: [NgFor, NgIf, NgClass, NgOptimizedImage, CuestionarioQuizComponent, EvidenciaRetoComponent, SessionActionsComponent],
   templateUrl: './perfil-alumno.component.html',
   styleUrls: ['./perfil-alumno.component.css'],
 })
@@ -51,9 +52,11 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   filtroRetoActual: FiltroRetoAlumno = 'todos';
   cargando = true;
   mensajeError: string | null = null;
+  mensajeErrorQuizModal: string | null = null;
   mensajeQuiz: string | null = null;
   @ViewChild('actividadChart') private actividadChartCanvas?: ElementRef<HTMLCanvasElement>;
   private actividadChart: Chart | null = null;
+  private resaltadoCuestionariosTimeout: number | null = null;
 
   constructor() {
     this.puntosRecoleccionSugeridos = this.perfilAlumnoService.obtenerPuntosRecoleccionSugeridos();
@@ -91,32 +94,20 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.actividadChart?.destroy();
+
+    if (this.resaltadoCuestionariosTimeout !== null && isPlatformBrowser(this.platformId)) {
+      window.clearTimeout(this.resaltadoCuestionariosTimeout);
+    }
   }
 
   cerrarSesion(): void {
     this.authService.cerrarSesionGuardada();
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { replaceUrl: true });
   }
 
-  cambiarContrasena(): void {
+  cambiarContrasena(nueva: string): void {
     if (!this.sesion) {
       this.mensajeError = 'No hay sesión activa para cambiar la contraseña.';
-      return;
-    }
-
-    const nueva = window.prompt('Ingresa tu nueva contraseña (mínimo 6 caracteres):', '');
-    if (!nueva) {
-      return;
-    }
-
-    if (nueva.trim().length < 6) {
-      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-
-    const confirmar = window.prompt('Confirma tu nueva contraseña:', '');
-    if (confirmar !== nueva) {
-      this.mensajeError = 'La confirmación no coincide con la nueva contraseña.';
       return;
     }
 
@@ -167,7 +158,7 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
         escuelaId,
         gradoNormalizado
       ),
-      cuestionariosDisponibles: this.perfilAlumnoService.obtenerCuestionariosDisponibles(escuelaId, gradoNormalizado),
+      cuestionariosDisponibles: this.perfilAlumnoService.obtenerCuestionariosDisponibles(escuelaId, sesion._id, gradoNormalizado),
       puntosRetosAprobados: this.perfilAlumnoService.obtenerPuntosRetosAprobados(sesion._id),
       rankingEscuela: this.perfilAlumnoService.obtenerRankingEscuela(escuelaId, sesion._id),
     }).subscribe({
@@ -212,7 +203,22 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const seccion = document.getElementById('seccion-cuestionarios-alumno');
-    seccion?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!seccion) {
+      return;
+    }
+
+    seccion.classList.remove('section-highlight');
+    void seccion.offsetWidth;
+    seccion.classList.add('section-highlight');
+
+    if (this.resaltadoCuestionariosTimeout !== null) {
+      window.clearTimeout(this.resaltadoCuestionariosTimeout);
+    }
+
+    this.resaltadoCuestionariosTimeout = window.setTimeout(() => {
+      seccion.classList.remove('section-highlight');
+      this.resaltadoCuestionariosTimeout = null;
+    }, 1800);
   }
 
   private renderizarGraficoActividades(): void {
@@ -340,6 +346,10 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   instruccionCuestionario(cuestionario: CuestionarioDisponibleAlumno): string {
+    if (cuestionario.yaRealizado) {
+      return 'Este cuestionario ya fue realizado. Puedes revisar tu progreso en el panel.';
+    }
+
     const modalidad = (cuestionario.modalidad || 'mixto').toLowerCase();
 
     if (modalidad === 'mixto') {
@@ -352,6 +362,12 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
   abrirQuiz(cuestionario: CuestionarioDisponibleAlumno): void {
     this.mensajeError = null;
     this.mensajeQuiz = null;
+    this.mensajeErrorQuizModal = null;
+
+    if (cuestionario.yaRealizado) {
+      this.mensajeQuiz = 'Este cuestionario ya fue realizado.';
+      return;
+    }
 
     if (!cuestionario.preguntas || cuestionario.preguntas.length === 0) {
       this.mensajeError = 'Este cuestionario aun no tiene preguntas configuradas por el profesor.';
@@ -367,6 +383,7 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.cuestionarioSeleccionado = null;
+    this.mensajeErrorQuizModal = null;
   }
 
   completarQuiz(evento: QuizCompletadoPayload): void {
@@ -376,12 +393,13 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const escuelaId = this.obtenerEscuelaIdSesion();
     if (!escuelaId) {
-      this.mensajeError = 'No se pudo guardar el resultado porque falta la escuela del alumno en sesión.';
+      this.mensajeErrorQuizModal = 'No se pudo guardar el resultado porque la sesión no tiene una escuela válida.';
       return;
     }
 
     this.guardandoQuiz = true;
     this.mensajeQuiz = null;
+    this.mensajeErrorQuizModal = null;
 
     this.perfilAlumnoService
       .registrarResultadoCuestionario(
@@ -397,9 +415,9 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
           this.mensajeQuiz = 'Resultado guardado correctamente. Se actualizó tu progreso.';
           this.cargarReporte();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.guardandoQuiz = false;
-          this.mensajeError = 'No fue posible guardar el resultado del cuestionario.';
+          this.mensajeErrorQuizModal = this.obtenerMensajeErrorApi(error, 'No fue posible guardar el resultado del cuestionario.');
         },
       });
   }
@@ -428,20 +446,22 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (typeof escuelaSesion === 'string') {
       const valor = escuelaSesion.trim();
-      return valor.length > 0 ? valor : null;
+      return this.esObjectId(valor) ? valor : null;
     }
 
     if (!escuelaSesion || typeof escuelaSesion !== 'object') {
       return null;
     }
 
-    const escuelaObj = escuelaSesion as { _id?: unknown };
-    if (typeof escuelaObj._id !== 'string') {
+    const escuelaObj = escuelaSesion as { _id?: unknown; id?: unknown };
+    const idEscuela = typeof escuelaObj._id === 'string' ? escuelaObj._id : typeof escuelaObj.id === 'string' ? escuelaObj.id : '';
+
+    if (!idEscuela) {
       return null;
     }
 
-    const valor = escuelaObj._id.trim();
-    return valor.length > 0 ? valor : null;
+    const valor = idEscuela.trim();
+    return this.esObjectId(valor) ? valor : null;
   }
 
   private normalizarGradoSesion(grado?: string): string | undefined {
@@ -451,5 +471,21 @@ export class PerfilAlumnoComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const valor = grado.trim();
     return valor.length > 0 ? valor : undefined;
+  }
+
+  private obtenerMensajeErrorApi(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const backendMessage = error.error?.message;
+
+      if (typeof backendMessage === 'string' && backendMessage.trim().length > 0) {
+        return backendMessage;
+      }
+    }
+
+    return fallback;
+  }
+
+  private esObjectId(valor: string): boolean {
+    return /^[a-f\d]{24}$/i.test(valor.trim());
   }
 }

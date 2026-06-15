@@ -1,0 +1,231 @@
+<main class="edu-shell min-h-screen bg-[#f0fdf4]">
+
+  <!-- HEADER -->
+  <header class="edu-header">
+    <div class="edu-header-inner">
+      <div class="flex items-center gap-3">
+          <span class="brand-title text-2xl font-bold text-white">EcoTribu</span> 
+        <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
+      </div>
+      <h1 class="edu-header-title">Educación en Reciclaje</h1>
+      <a routerLink="/" class="edu-back-btn">← Volver</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="edu-hero">
+    <div class="edu-hero-inner">
+      <span class="edu-hero-badge">🌍 Cuida el planeta</span>
+      <h2 class="edu-hero-title">¿Sabes cómo reciclar<br/>correctamente?</h2>
+      <p class="edu-hero-sub">Aprende de forma divertida todo sobre reciclaje, ecosistemas y cómo cada pequeña acción tuya puede transformar el mundo.</p>
+      <div class="edu-hero-stats">
+        <div class="edu-stat">
+          <span class="edu-stat-value">7 mil mill.</span>
+          <span class="edu-stat-label">toneladas de basura/año</span>
+        </div>
+        <div class="edu-stat">
+          <span class="edu-stat-value">30%</span>
+          <span class="edu-stat-label">se podría reciclar</span>
+        </div>
+        <div class="edu-stat">
+          <span class="edu-stat-value">450 años</span>
+          <span class="edu-stat-label">tarda el plástico en degradarse</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="edu-content">
+
+    <!-- TARJETAS DE CATEGORIAS DE RECICLAJE -->
+    <section class="edu-section">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">Los 5 tipos de reciclaje</h2>
+        <p class="edu-section-sub">Haz clic en cada categoría para conocer más</p>
+      </div>
+
+      <div class="edu-categories-grid">
+        <article
+          *ngFor="let cat of categorias"
+          class="edu-cat-card"
+          [class.edu-cat-card-open]="categoriaAbierta === cat.id"
+          (click)="toggleCategoria(cat.id)"
+        >
+          <div class="edu-cat-header">
+            <span class="edu-cat-icon">{{ cat.icono }}</span>
+            <div>
+              <h3 class="edu-cat-title">{{ cat.titulo }}</h3>
+              <p class="edu-cat-color-label" [style.color]="cat.color">{{ cat.etiqueta }}</p>
+            </div>
+            <span class="edu-cat-toggle">{{ categoriaAbierta === cat.id ? '▲' : '▼' }}</span>
+          </div>
+          <div *ngIf="categoriaAbierta === cat.id" class="edu-cat-body">
+            <p class="edu-cat-desc">{{ cat.descripcion }}</p>
+            <ul class="edu-cat-items">
+              <li *ngFor="let item of cat.ejemplos">{{ item }}</li>
+            </ul>
+            <div class="edu-cat-tip">
+              <span class="edu-cat-tip-icon">💡</span>
+              <span>{{ cat.tip }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- COMO FUNCIONA EL RECICLAJE -->
+    <section class="edu-section">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">¿Cómo funciona el reciclaje?</h2>
+        <p class="edu-section-sub">El proceso paso a paso</p>
+      </div>
+
+      <div class="edu-steps">
+        <div *ngFor="let paso of pasosProceso; let i = index" class="edu-step">
+          <div class="edu-step-num">{{ i + 1 }}</div>
+          <div class="edu-step-icon">{{ paso.icono }}</div>
+          <h3 class="edu-step-title">{{ paso.titulo }}</h3>
+          <p class="edu-step-desc">{{ paso.descripcion }}</p>
+          <div *ngIf="i < pasosProceso.length - 1" class="edu-step-arrow">→</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIDEOS DE YOUTUBE -->
+    <section class="edu-section">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">Videos educativos</h2>
+        <p class="edu-section-sub">Aprende viendo, escuchando y disfrutando</p>
+      </div>
+
+      <div class="edu-tabs">
+        <button
+          *ngFor="let video of videos; let i = index"
+          type="button"
+          class="edu-tab"
+          [class.edu-tab-active]="videoActivo === i"
+          (click)="videoActivo = i"
+        >
+          {{ video.etiqueta }}
+        </button>
+      </div>
+
+      <div class="edu-video-wrap">
+        <div class="edu-video-info">
+          <h3 class="edu-video-title">{{ videos[videoActivo].titulo }}</h3>
+          <p class="edu-video-desc">{{ videos[videoActivo].descripcion }}</p>
+        </div>
+        <div class="edu-video-frame">
+          <iframe
+            [src]="videos[videoActivo].urlSegura"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            title="Video educativo de reciclaje"
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATOS CURIOSOS -->
+    <section class="edu-section edu-section-dark">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title edu-title-white">¿Sabías esto?</h2>
+        <p class="edu-section-sub edu-sub-light">Datos que te harán pensar dos veces</p>
+      </div>
+
+      <div class="edu-facts-grid">
+        <article *ngFor="let hecho of hechos; let i = index" class="edu-fact-card" [style.--fact-i]="i">
+          <span class="edu-fact-icon">{{ hecho.icono }}</span>
+          <p class="edu-fact-text">{{ hecho.texto }}</p>
+          <span class="edu-fact-tag">{{ hecho.tag }}</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- EL ECOSISTEMA DEL RECICLAJE -->
+    <section class="edu-section">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">El ecosistema del reciclaje</h2>
+        <p class="edu-section-sub">Todos los actores involucrados</p>
+      </div>
+
+      <div class="edu-ecosystem">
+        <div *ngFor="let actor of actoresEcosistema" class="edu-eco-actor">
+          <div class="edu-eco-icon">{{ actor.icono }}</div>
+          <h3 class="edu-eco-title">{{ actor.titulo }}</h3>
+          <p class="edu-eco-desc">{{ actor.descripcion }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESAFIO / QUIZ INTERACTIVO -->
+    <section class="edu-section edu-section-quiz">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">Pon a prueba tu conocimiento</h2>
+        <p class="edu-section-sub">Responde y ve tu resultado al instante</p>
+      </div>
+
+      <div *ngIf="!quizFinalizado" class="edu-quiz-wrap">
+        <div class="edu-quiz-progress">
+          <div class="edu-quiz-progress-bar" [style.width.%]="(preguntaActual / preguntasQuiz.length) * 100"></div>
+        </div>
+        <p class="edu-quiz-counter">Pregunta {{ preguntaActual + 1 }} de {{ preguntasQuiz.length }}</p>
+
+        <article class="edu-quiz-card">
+          <p class="edu-quiz-enunciado">{{ preguntasQuiz[preguntaActual].enunciado }}</p>
+          <div class="edu-quiz-opciones">
+            <button
+              *ngFor="let opcion of preguntasQuiz[preguntaActual].opciones; let oi = index"
+              type="button"
+              class="edu-quiz-opcion"
+              [class.edu-quiz-opcion-correcta]="respuestaSeleccionada !== null && oi === preguntasQuiz[preguntaActual].correcta"
+              [class.edu-quiz-opcion-incorrecta]="respuestaSeleccionada === oi && oi !== preguntasQuiz[preguntaActual].correcta"
+              [class.edu-quiz-opcion-seleccionada]="respuestaSeleccionada === oi"
+              [disabled]="respuestaSeleccionada !== null"
+              (click)="responder(oi)"
+            >
+              {{ opcion }}
+            </button>
+          </div>
+          <p *ngIf="respuestaSeleccionada !== null" class="edu-quiz-feedback" [class.edu-quiz-feedback-ok]="respuestaSeleccionada === preguntasQuiz[preguntaActual].correcta">
+            {{ respuestaSeleccionada === preguntasQuiz[preguntaActual].correcta ? '¡Correcto! 🎉' : 'No era esa. ' + preguntasQuiz[preguntaActual].explicacion }}
+          </p>
+          <button *ngIf="respuestaSeleccionada !== null" type="button" class="edu-quiz-next-btn" (click)="siguientePregunta()">
+            {{ preguntaActual < preguntasQuiz.length - 1 ? 'Siguiente →' : 'Ver resultado' }}
+          </button>
+        </article>
+      </div>
+
+      <div *ngIf="quizFinalizado" class="edu-quiz-resultado">
+        <span class="edu-resultado-icon">{{ puntajeQuiz === preguntasQuiz.length ? '🏆' : puntajeQuiz >= preguntasQuiz.length / 2 ? '⭐' : '📚' }}</span>
+        <h3 class="edu-resultado-titulo">{{ puntajeQuiz === preguntasQuiz.length ? '¡Perfecto!' : puntajeQuiz >= preguntasQuiz.length / 2 ? '¡Muy bien!' : '¡Sigue aprendiendo!' }}</h3>
+        <p class="edu-resultado-score">Acertaste <strong>{{ puntajeQuiz }}</strong> de <strong>{{ preguntasQuiz.length }}</strong> preguntas</p>
+        <button type="button" class="edu-quiz-next-btn" (click)="reiniciarQuiz()">Intentar de nuevo</button>
+      </div>
+    </section>
+
+    <!-- TIPS PRACTICOS -->
+    <section class="edu-section">
+      <div class="edu-section-header">
+        <h2 class="edu-section-title">10 tips para reciclar en casa</h2>
+        <p class="edu-section-sub">Pequeñas acciones, gran impacto</p>
+      </div>
+      <ul class="edu-tips-list">
+        <li *ngFor="let tip of tipsCasa; let i = index">
+          <span class="edu-tip-num">{{ i + 1 }}</span>
+          <p class="edu-tip-text">{{ tip }}</p>
+        </li>
+      </ul>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="edu-footer">
+    <p>Hecho con 💚 por EcoTribu — Educación ambiental para todos</p>
+    <a routerLink="/" class="edu-back-btn mt-2">Volver al inicio</a>
+  </footer>
+
+</main>

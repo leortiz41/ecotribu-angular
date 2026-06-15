@@ -82,14 +82,12 @@ const resultadoCuestionarioSchema = new mongoose.Schema(
   }
 );
 
-resultadoCuestionarioSchema.pre('validate', function calcularPorcentaje(next) {
+resultadoCuestionarioSchema.pre('validate', function calcularPorcentaje() {
   if (this.puntajeMaximo > 0) {
     this.porcentaje = Number(((this.puntajeObtenido / this.puntajeMaximo) * 100).toFixed(2));
   } else {
     this.porcentaje = 0;
   }
-
-  next();
 });
 
 resultadoCuestionarioSchema.index({ cuestionario: 1, alumno: 1, intento: 1 }, { unique: true });

@@ -11,10 +11,6 @@
       <div class="w-full lg:w-auto">
         <p class="mb-1 text-left text-base font-semibold tracking-wide sm:text-xl lg:text-right">Panel Administrador</p>
         <p class="mb-3 text-left text-xs text-emerald-50/90 lg:text-right">Accesos rápidos de gestión</p>
-        <div class="mb-3 flex flex-wrap justify-start gap-2 lg:justify-end">
-          <button type="button" class="header-action-btn" (click)="cambiarContrasena()">Cambiar contraseña</button>
-          <button type="button" class="header-action-btn header-action-btn-danger" (click)="cerrarSesion()">Cerrar sesión</button>
-        </div>
         <nav class="header-nav-grid" aria-label="Gestiones principales">
           <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'escuelas'" (click)="navegarGestionSuperior('escuelas')">
             Escuelas
@@ -29,11 +25,17 @@
             Ranking
           </button>
           <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'encuestas'" (click)="navegarGestionSuperior('encuestas')">
-            Encuestas
+            Cuestionarios
           </button>
           <button type="button" class="header-nav-link" [class.header-nav-link-active]="vistaActual === 'evidencias'" (click)="navegarGestionSuperior('evidencias')">
             Evidencias
           </button>
+          <app-session-actions
+            [displayName]="sesion?.nombre || 'Administrador'"
+            roleLabel="Administrador"
+            (cambiarContrasena)="cambiarContrasena($event)"
+            (cerrarSesion)="cerrarSesion()"
+          ></app-session-actions>
         </nav>
       </div>
     </div>
@@ -121,25 +123,25 @@
           <ul class="space-y-3">
             <li class="list-item">
               <div class="flex items-center justify-between">
-                <p class="font-bold text-slate-900">Total usuarios</p>
+                <p class="font-bold text-slate-700">Total usuarios</p>
                 <p class="text-lg font-black text-emerald-700">{{ usuarios.length }}</p>
               </div>
             </li>
             <li class="list-item">
               <div class="flex items-center justify-between">
-                <p class="font-bold text-slate-900">Activos</p>
+                <p class="font-bold text-slate-700">Activos</p>
                 <p class="text-lg font-black text-green-700">{{ usuariosActivos }}</p>
               </div>
             </li>
             <li class="list-item">
               <div class="flex items-center justify-between">
-                <p class="font-bold text-slate-900">Profesores</p>
+                <p class="font-bold text-slate-700">Profesores</p>
                 <p class="text-lg font-black text-purple-700">{{ profesoresActivos }}</p>
               </div>
             </li>
             <li class="list-item">
               <div class="flex items-center justify-between">
-                <p class="font-bold text-slate-900">Alumnos</p>
+                <p class="font-bold text-slate-700">Alumnos</p>
                 <p class="text-lg font-black text-teal-700">{{ alumnosActivos }}</p>
               </div>
             </li>
@@ -173,9 +175,26 @@
 
       <article class="panel-card">
         <h2 class="panel-title text-emerald-700">Escuelas registradas</h2>
-        <div *ngIf="escuelas.length === 0" class="empty-state">No hay escuelas registradas.</div>
-        <ul *ngIf="escuelas.length > 0" class="space-y-2 pl-0 m-0 list-none">
-          <li *ngFor="let esc of escuelas" class="list-item">
+
+        <div class="admin-filter-bar mb-3">
+          <input
+            type="text"
+            class="admin-filter-input"
+            placeholder="Buscar por nombre o código..."
+            [value]="filtroEscuelaNombre"
+            (input)="filtroEscuelaNombre = $any($event.target).value"
+          />
+          <div class="admin-filter-chips">
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroEscuelaEstado === 'todas'" (click)="filtroEscuelaEstado = 'todas'">Todas</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroEscuelaEstado === 'activa'" (click)="filtroEscuelaEstado = 'activa'">Activas</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroEscuelaEstado === 'inactiva'" (click)="filtroEscuelaEstado = 'inactiva'">Inactivas</button>
+          </div>
+          <span class="admin-filter-count">{{ escuelasFiltradas.length }} resultado{{ escuelasFiltradas.length === 1 ? '' : 's' }}</span>
+        </div>
+
+        <div *ngIf="escuelasFiltradas.length === 0" class="empty-state">No hay escuelas con ese filtro.</div>
+        <ul *ngIf="escuelasFiltradas.length > 0" class="space-y-2 pl-0 m-0 list-none">
+          <li *ngFor="let esc of escuelasFiltradas" class="list-item">
             <p class="font-bold text-slate-900">{{ esc.nombre }}</p>
             <p class="text-xs text-slate-600">{{ esc.codigo }}</p>
             <p *ngIf="esc.activa" class="text-xs font-semibold text-green-700">
@@ -272,9 +291,27 @@
 
       <article class="panel-card">
         <h2 class="panel-title text-emerald-700">Usuarios del sistema</h2>
-        <div *ngIf="usuarios.length === 0" class="empty-state">No hay usuarios registrados.</div>
-        <div *ngIf="usuarios.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
-          <div *ngFor="let usr of usuarios" class="list-item">
+
+        <div class="admin-filter-bar mb-3">
+          <input
+            type="text"
+            class="admin-filter-input"
+            placeholder="Buscar por nombre o email..."
+            [value]="filtroUsuarioNombre"
+            (input)="filtroUsuarioNombre = $any($event.target).value"
+          />
+          <div class="admin-filter-chips">
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'todos'" (click)="filtroUsuarioRol = 'todos'">Todos</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'alumno'" (click)="filtroUsuarioRol = 'alumno'">Alumnos</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'profesor'" (click)="filtroUsuarioRol = 'profesor'">Profesores</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'administrador'" (click)="filtroUsuarioRol = 'administrador'">Admins</button>
+          </div>
+          <span class="admin-filter-count">{{ usuariosFiltrados.length }} resultado{{ usuariosFiltrados.length === 1 ? '' : 's' }}</span>
+        </div>
+
+        <div *ngIf="usuariosFiltrados.length === 0" class="empty-state">No hay usuarios con ese filtro.</div>
+        <div *ngIf="usuariosFiltrados.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+          <div *ngFor="let usr of usuariosFiltrados" class="list-item">
             <p class="font-bold text-slate-900">{{ usr.nombre }}</p>
             <p class="text-xs text-slate-600">{{ usr.email }}</p>
             <p class="text-xs font-semibold text-emerald-700">{{ usr.rol }}</p>
@@ -309,9 +346,28 @@
 
         <article class="panel-card">
           <h2 class="panel-title text-emerald-700">Cuestionarios en sistema</h2>
-          <div *ngIf="cuestionariosActivos.length === 0" class="empty-state">No hay cuestionarios en el sistema.</div>
-          <div *ngIf="cuestionariosActivos.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
-            <div *ngFor="let quiz of cuestionariosActivos" class="list-item">
+
+          <div class="admin-filter-bar mb-3">
+            <input
+              type="text"
+              class="admin-filter-input"
+              placeholder="Buscar por titulo..."
+              [value]="filtroCuestionarioNombre"
+              (input)="filtroCuestionarioNombre = $any($event.target).value"
+            />
+            <input
+              type="text"
+              class="admin-filter-input"
+              placeholder="Filtrar por escuela..."
+              [value]="filtroCuestionarioEscuela"
+              (input)="filtroCuestionarioEscuela = $any($event.target).value"
+            />
+            <span class="admin-filter-count">{{ cuestionariosFiltrados.length }} resultado{{ cuestionariosFiltrados.length === 1 ? '' : 's' }}</span>
+          </div>
+
+          <div *ngIf="cuestionariosFiltrados.length === 0" class="empty-state">No hay cuestionarios con ese filtro.</div>
+          <div *ngIf="cuestionariosFiltrados.length > 0" class="space-y-2 max-h-96 overflow-y-auto">
+            <div *ngFor="let quiz of cuestionariosFiltrados" class="list-item">
               <p class="font-bold text-slate-900">{{ quiz.titulo }}</p>
               <p class="text-xs text-slate-600">{{ quiz.escuela.nombre }}</p>
               <p class="text-xs font-semibold text-emerald-700">{{ quiz.estado }}</p>
@@ -380,7 +436,7 @@
 
     <section *ngIf="vistaActual === 'encuestas'">
       <article class="panel-card">
-        <h2 class="panel-title text-emerald-700">Gestion de resultados de encuesta</h2>
+        <h2 class="panel-title text-emerald-700">Gestion de resultados de cuestionarios</h2>
         <div *ngIf="cuestionariosActivos.length === 0" class="empty-state">No hay cuestionarios para mostrar.</div>
         <div *ngIf="cuestionariosActivos.length > 0" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div *ngFor="let quiz of cuestionariosActivos" class="list-item">
@@ -413,18 +469,235 @@
 
         <div *ngIf="evidencias.length === 0" class="empty-state">No hay evidencias registradas.</div>
 
-        <div *ngIf="evidencias.length > 0" class="space-y-2 max-h-[28rem] overflow-y-auto">
-          <div *ngFor="let evidencia of evidencias" class="list-item">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <p class="font-bold text-slate-900">Reto: {{ evidencia.reto?.titulo || 'Sin reto' }}</p>
-              <p class="text-xs font-semibold text-emerald-700">{{ evidencia.estado }}</p>
+        <div *ngIf="evidencias.length > 0" class="space-y-2 max-h-[32rem] overflow-y-auto">
+          <div *ngFor="let evidencia of evidencias" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="mb-2 flex items-start justify-between gap-2">
+              <div class="flex-1">
+                <p class="font-bold text-slate-900">{{ evidencia.reto?.titulo || 'Sin reto' }}</p>
+                <p class="mt-1 text-xs text-slate-600">Alumno: {{ evidencia.alumno?.nombre || 'Sin alumno' }}</p>
+              </div>
+              <span
+                class="rounded-full border px-3 py-1 text-xs font-bold"
+                [ngClass]="{
+                  'border-amber-200 bg-amber-50 text-amber-700': evidencia.estado === 'pendiente',
+                  'border-green-200 bg-green-50 text-green-700': evidencia.estado === 'aprobada',
+                  'border-red-200 bg-red-50 text-red-700': evidencia.estado === 'rechazada'
+                }"
+              >
+                {{ evidencia.estado }}
+              </span>
             </div>
-            <p class="text-xs text-slate-600">Alumno: {{ evidencia.alumno?.nombre || 'Sin alumno' }}</p>
-            <p class="text-xs text-slate-500">Fecha: {{ evidencia.createdAt ? (evidencia.createdAt | date:'short') : 'N/D' }}</p>
+
+            <div class="mb-3 space-y-1 text-xs text-slate-600">
+              <p *ngIf="evidencia.puntoRecoleccionNombre">Punto de recoleccion: <strong>{{ evidencia.puntoRecoleccionNombre }}</strong></p>
+              <p *ngIf="evidencia.puntoRecoleccionCiudad">Ubicacion: <strong>{{ evidencia.puntoRecoleccionCiudad }}</strong></p>
+              <p *ngIf="evidencia.descripcion">Descripcion: <strong>{{ evidencia.descripcion }}</strong></p>
+              <p>Tipo de evidencia: <strong>{{ tipoEvidencia(evidencia.archivoUrl) }}</strong></p>
+              <p>Fecha: <strong>{{ evidencia.createdAt ? (evidencia.createdAt | date:'short') : 'N/D' }}</strong></p>
+            </div>
+
+            <div *ngIf="evidencia.archivoUrl" class="mb-3">
+              <a [href]="evidencia.archivoUrl" target="_blank" rel="noopener" class="text-xs font-semibold text-blue-600 hover:underline">
+                Ver archivo de evidencia
+              </a>
+            </div>
+
+            <div *ngIf="evidencia.estado !== 'pendiente'" class="mb-3 rounded-lg bg-slate-50 p-3 text-xs">
+              <p class="mb-1 font-semibold text-slate-700">Revision:</p>
+              <p *ngIf="evidencia.revisadoPor" class="text-slate-600">Revisado por: <strong>{{ evidencia.revisadoPor?.nombre }}</strong></p>
+              <p *ngIf="evidencia.fechaRevision" class="text-slate-600">Fecha: <strong>{{ evidencia.fechaRevision | date:'short' }}</strong></p>
+              <p *ngIf="evidencia.comentarioRevision" class="mt-1 text-slate-600">Comentario: <strong>{{ evidencia.comentarioRevision }}</strong></p>
+            </div>
+
+            <div *ngIf="evidencia.estado === 'pendiente'" class="flex gap-2">
+              <button
+                type="button"
+                class="flex-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-green-700"
+                (click)="abrirValidacionEvidencia(evidencia)"
+              >
+                Aprobar o rechazar
+              </button>
+            </div>
           </div>
         </div>
       </article>
     </section>
+
+    <div *ngIf="modalValidacionEvidenciaAbierto && evidenciaEnEdicion" class="modal-backdrop" (click)="cerrarModalValidacionEvidencia()">
+      <article class="modal-card" (click)="$event.stopPropagation()">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-emerald-700">Validar evidencia</h3>
+            <p class="text-xs text-slate-600">Reto: {{ evidenciaEnEdicion.reto?.titulo || 'Sin reto' }}</p>
+            <p class="text-xs text-slate-600">Alumno: {{ evidenciaEnEdicion.alumno?.nombre || 'Sin alumno' }}</p>
+          </div>
+          <button type="button" class="btn-action-delete" (click)="cerrarModalValidacionEvidencia()">Cerrar</button>
+        </div>
+
+        <div class="mb-4 space-y-3 rounded-lg bg-slate-50 p-4 text-sm">
+          <p *ngIf="evidenciaEnEdicion.puntoRecoleccionNombre"><strong>Punto:</strong> {{ evidenciaEnEdicion.puntoRecoleccionNombre }}</p>
+          <p *ngIf="evidenciaEnEdicion.puntoRecoleccionCiudad"><strong>Ubicacion:</strong> {{ evidenciaEnEdicion.puntoRecoleccionCiudad }}</p>
+          <p *ngIf="evidenciaEnEdicion.descripcion"><strong>Descripcion:</strong> {{ evidenciaEnEdicion.descripcion }}</p>
+          <p><strong>Tipo de evidencia:</strong> {{ tipoEvidencia(evidenciaEnEdicion.archivoUrl) }}</p>
+          <a
+            *ngIf="esEnlaceExterno(evidenciaEnEdicion.archivoUrl)"
+            [href]="evidenciaEnEdicion.archivoUrl"
+            target="_blank"
+            rel="noopener"
+            class="text-blue-600 hover:underline break-all"
+          >
+            {{ resumenArchivo(evidenciaEnEdicion.archivoUrl) }}
+          </a>
+          <p *ngIf="!esEnlaceExterno(evidenciaEnEdicion.archivoUrl) && evidenciaEnEdicion.archivoUrl" class="text-xs text-slate-600">
+            Archivo cargado en formato interno (base64).
+          </p>
+          <img
+            *ngIf="esDataUriImagen(evidenciaEnEdicion.archivoUrl)"
+            [src]="evidenciaEnEdicion.archivoUrl"
+            alt="Vista previa de evidencia"
+            class="max-h-44 rounded-lg border border-slate-200 object-contain"
+          />
+        </div>
+
+        <p *ngIf="mensajeValidacionEvidencia" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+          {{ mensajeValidacionEvidencia }}
+        </p>
+
+        <div class="mb-4">
+          <label class="field-label" for="comentarioRevisionEvidencia">Comentario (obligatorio para rechazo)</label>
+          <textarea
+            #comentarioInput
+            id="comentarioRevisionEvidencia"
+            class="field-input"
+            rows="4"
+            placeholder="Escribe un comentario..."
+          ></textarea>
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button" class="btn-action-delete" (click)="validarEvidencia('rechazada', comentarioInput.value)" [disabled]="validandoEvidencia">
+            {{ validandoEvidencia ? 'Procesando...' : 'Rechazar' }}
+          </button>
+          <button type="button" class="btn-action-edit" (click)="validarEvidencia('aprobada', comentarioInput.value)" [disabled]="validandoEvidencia">
+            {{ validandoEvidencia ? 'Procesando...' : 'Aprobar' }}
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div *ngIf="modalEdicionRetoAbierto && retoEnEdicionId" class="modal-backdrop" (click)="cerrarModalEdicionReto()">
+      <article class="modal-card" (click)="$event.stopPropagation()">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-emerald-700">Editar reto publicado</h3>
+            <p class="text-xs text-slate-600">Formulario de actualización con la misma estructura usada por el profesor.</p>
+          </div>
+          <button type="button" class="btn-action-delete" (click)="cerrarModalEdicionReto()">Cerrar</button>
+        </div>
+
+        <form [formGroup]="retoEdicionForm" (ngSubmit)="actualizarRetoDesdeFormulario()" class="space-y-4">
+          <div>
+            <label class="field-label" for="adminRetoTitulo">Titulo</label>
+            <input id="adminRetoTitulo" class="field-input" formControlName="titulo" />
+          </div>
+          <div>
+            <label class="field-label" for="adminRetoDescripcion">Descripcion</label>
+            <textarea id="adminRetoDescripcion" class="field-input" formControlName="descripcion" rows="3"></textarea>
+          </div>
+          <div>
+            <label class="field-label" for="adminRetoGrado">Clase/Grado objetivo (opcional)</label>
+            <input id="adminRetoGrado" class="field-input" formControlName="grado" />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label class="field-label" for="adminRetoPuntos">Puntos</label>
+              <input id="adminRetoPuntos" type="number" class="field-input" formControlName="puntos" />
+            </div>
+            <div>
+              <label class="field-label" for="adminRetoInicio">Inicio</label>
+              <input id="adminRetoInicio" type="date" class="field-input" formControlName="fechaInicio" />
+            </div>
+            <div>
+              <label class="field-label" for="adminRetoFin">Fin</label>
+              <input id="adminRetoFin" type="date" class="field-input" formControlName="fechaFin" />
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="adminRetoEstado">Estado</label>
+            <select id="adminRetoEstado" class="field-input" formControlName="estado">
+              <option value="borrador">Borrador</option>
+              <option value="publicado">Publicado</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+          </div>
+
+          <div class="flex flex-wrap justify-end gap-2 pt-1">
+            <button type="button" class="btn-action-edit" (click)="cerrarModalEdicionReto()">Cancelar</button>
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Actualizar reto</button>
+          </div>
+        </form>
+      </article>
+    </div>
+
+    <div *ngIf="modalEdicionCuestionarioAbierto && cuestionarioEnEdicionId" class="modal-backdrop" (click)="cerrarModalEdicionCuestionario()">
+      <article class="modal-card" (click)="$event.stopPropagation()">
+        <div class="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black text-emerald-700">Editar cuestionario en sistema</h3>
+            <p class="text-xs text-slate-600">Formulario de actualización para ajustar contenido y estado del cuestionario.</p>
+          </div>
+          <button type="button" class="btn-action-delete" (click)="cerrarModalEdicionCuestionario()">Cerrar</button>
+        </div>
+
+        <form [formGroup]="cuestionarioEdicionForm" (ngSubmit)="actualizarCuestionarioDesdeFormulario()" class="space-y-4">
+          <div>
+            <label class="field-label" for="adminQuizTitulo">Titulo</label>
+            <input id="adminQuizTitulo" class="field-input" formControlName="titulo" />
+          </div>
+          <div>
+            <label class="field-label" for="adminQuizDescripcion">Descripcion</label>
+            <textarea id="adminQuizDescripcion" class="field-input" formControlName="descripcion" rows="2"></textarea>
+          </div>
+          <div>
+            <label class="field-label" for="adminQuizGrado">Grado</label>
+            <input id="adminQuizGrado" class="field-input" formControlName="grado" />
+          </div>
+          <div>
+            <label class="field-label" for="adminQuizPregunta">Pregunta</label>
+            <input id="adminQuizPregunta" class="field-input" formControlName="pregunta" />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <input class="field-input" formControlName="opcionA" placeholder="Opcion A" />
+            <input class="field-input" formControlName="opcionB" placeholder="Opcion B" />
+            <input class="field-input" formControlName="opcionC" placeholder="Opcion C" />
+            <input class="field-input" formControlName="opcionD" placeholder="Opcion D" />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label class="field-label" for="adminQuizRespuesta">Indice respuesta (0-3)</label>
+              <input id="adminQuizRespuesta" type="number" class="field-input" formControlName="respuestaCorrecta" />
+            </div>
+            <div>
+              <label class="field-label" for="adminQuizPuntaje">Puntaje</label>
+              <input id="adminQuizPuntaje" type="number" class="field-input" formControlName="puntaje" />
+            </div>
+            <div>
+              <label class="field-label" for="adminQuizEstado">Estado</label>
+              <select id="adminQuizEstado" class="field-input" formControlName="estado">
+                <option value="borrador">Borrador</option>
+                <option value="publicado">Publicado</option>
+                <option value="cerrado">Cerrado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap justify-end gap-2 pt-1">
+            <button type="button" class="btn-action-edit" (click)="cerrarModalEdicionCuestionario()">Cancelar</button>
+            <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Actualizar cuestionario</button>
+          </div>
+        </form>
+      </article>
+    </div>
 
     <div *ngIf="modalEdicionUsuarioAbierto && usuarioEnEdicionId" class="modal-backdrop">
       <article class="modal-card" (click)="$event.stopPropagation()">

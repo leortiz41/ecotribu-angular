@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../services/auth.service';
+import { SessionActionsComponent } from '../shared/session-actions/session-actions.component';
 import {
   AlumnoEscuelaProfesor,
   ActividadPerfilProfesor,
@@ -22,11 +23,11 @@ import {
 import { Chart } from 'chart.js';
 import { crearGraficoLinea } from '../utils/dashboard-chart';
 
-type VistaProfesor = 'resumen' | 'retos' | 'cuestionarios' | 'alumnos';
+type VistaProfesor = 'resumen' | 'retos' | 'cuestionarios' | 'alumnos' | 'evidencias';
 
 @Component({
   selector: 'app-perfil-profesor',
-  imports: [NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule],
+  imports: [NgIf, NgFor, NgOptimizedImage, ReactiveFormsModule, SessionActionsComponent],
   templateUrl: './perfil-profesor.component.html',
   styleUrls: ['./perfil-profesor.component.css'],
 })
@@ -44,6 +45,7 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
   recientes: ReadonlyArray<ItemRecienteProfesor> = [];
   retosProfesor: ReadonlyArray<RetoProfesor> = [];
   cuestionariosProfesor: ReadonlyArray<CuestionarioProfesor> = [];
+  resultadosCuestionariosProfesor: ReadonlyArray<ResultadoCuestionarioResumenProfesor> = [];
   alumnosEscuela: ReadonlyArray<AlumnoEscuelaProfesor> = [];
   evidenciasPendientesProfesor: ReadonlyArray<EvidenciaResumenProfesor> = [];
   retoEnEdicionId: string | null = null;
@@ -106,28 +108,12 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
 
   cerrarSesion(): void {
     this.authService.cerrarSesionGuardada();
-    this.router.navigate(['/']);
+    this.router.navigate(['/'], { replaceUrl: true });
   }
 
-  cambiarContrasena(): void {
+  cambiarContrasena(nueva: string): void {
     if (!this.sesion) {
       this.mensajeError = 'No hay sesión activa para cambiar la contraseña.';
-      return;
-    }
-
-    const nueva = window.prompt('Ingresa tu nueva contraseña (mínimo 6 caracteres):', '');
-    if (!nueva) {
-      return;
-    }
-
-    if (nueva.trim().length < 6) {
-      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
-      return;
-    }
-
-    const confirmar = window.prompt('Confirma tu nueva contraseña:', '');
-    if (confirmar !== nueva) {
-      this.mensajeError = 'La confirmación no coincide con la nueva contraseña.';
       return;
     }
 
@@ -488,12 +474,16 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     const comentario = window.prompt('Motivo del rechazo (recomendado):', '') ?? '';
+    if (!comentario.trim()) {
+      this.mensajeError = 'Debes escribir un comentario para rechazar la evidencia.';
+      return;
+    }
 
     this.cargando = true;
     this.perfilProfesorService
       .rechazarEvidencia(evidencia._id, {
         revisor: this.sesion._id,
-        comentarioRevision: comentario.trim() || undefined,
+        comentarioRevision: comentario.trim(),
       })
       .subscribe({
         next: () => {
@@ -604,6 +594,7 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
       next: ({ retos, cuestionarios, alumnos, evidencias, resultados }) => {
         this.retosProfesor = retos;
         this.cuestionariosProfesor = cuestionarios;
+        this.resultadosCuestionariosProfesor = resultados;
         this.alumnosEscuela = alumnos;
 
         const retoIds = new Set(retos.map((item) => item._id));
@@ -617,6 +608,7 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
       error: () => {
         this.retosProfesor = [];
         this.cuestionariosProfesor = [];
+        this.resultadosCuestionariosProfesor = [];
         this.alumnosEscuela = [];
         this.evidenciasPendientesProfesor = [];
         this.resetearResumenResultados();
@@ -731,6 +723,25 @@ export class PerfilProfesorComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     return valor?._id ?? '';
+  }
+
+  resultadosPorCuestionario(cuestionarioId: string): number {
+    return this.resultadosCuestionariosProfesor.filter(
+      (item) => this.extraerId(item.cuestionario) === cuestionarioId
+    ).length;
+  }
+
+  promedioPorCuestionario(cuestionarioId: string): number {
+    const resultados = this.resultadosCuestionariosProfesor.filter(
+      (item) => this.extraerId(item.cuestionario) === cuestionarioId
+    );
+
+    if (resultados.length === 0) {
+      return 0;
+    }
+
+    const suma = resultados.reduce((acc, item) => acc + (Number(item.porcentaje) || 0), 0);
+    return Number((suma / resultados.length).toFixed(1));
   }
 
   private metricasPorDefecto(): ReadonlyArray<MetricaPerfilProfesor> {
