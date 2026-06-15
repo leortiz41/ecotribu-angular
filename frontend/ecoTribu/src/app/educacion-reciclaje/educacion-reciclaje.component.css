@@ -156,7 +156,7 @@
 .edu-categories-grid {
 	display: grid;
 	gap: 0.8rem;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
 .edu-cat-card {
@@ -176,6 +176,7 @@
 
 .edu-cat-icon {
 	font-size: 2rem;
+	display: inline-flex;
 }
 
 .edu-cat-title {
@@ -267,8 +268,9 @@
 }
 
 .edu-step-icon {
-	font-size: 1.8rem;
+	font-size: 2rem;
 	margin-bottom: 0.4rem;
+	line-height: 1;
 }
 
 .edu-step-title {
@@ -398,6 +400,7 @@
 .edu-eco-icon {
 	font-size: 2.2rem;
 	margin-bottom: 0.5rem;
+	line-height: 1;
 }
 
 .edu-eco-title {

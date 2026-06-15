@@ -4,8 +4,8 @@
   <header class="edu-header">
     <div class="edu-header-inner">
       <div class="flex items-center gap-3">
+          <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
           <span class="brand-title text-2xl font-bold text-white">EcoTribu</span> 
-        <img ngSrc="/img/EcoTribu Blanco.png" width="28" height="28" alt="Logo EcoTribu" priority />
       </div>
       <h1 class="edu-header-title">Educación en Reciclaje</h1>
       <a routerLink="/" class="edu-back-btn">← Volver</a>
@@ -47,26 +47,26 @@
 
       <div class="edu-categories-grid">
         <article
-          *ngFor="let cat of categorias"
+          *ngFor="let cat of categorias; let i = index"
           class="edu-cat-card"
-          [class.edu-cat-card-open]="categoriaAbierta === cat.id"
-          (click)="toggleCategoria(cat.id)"
+          [class.edu-cat-card-open]="categoriaAbierta === i"
+          (click)="toggleCategoria(i)"
         >
           <div class="edu-cat-header">
-            <span class="edu-cat-icon">{{ cat.icono }}</span>
+            <i class="edu-cat-icon" [ngClass]="cat.icono" [style.color]="cat.color" aria-hidden="true"></i>
             <div>
               <h3 class="edu-cat-title">{{ cat.titulo }}</h3>
               <p class="edu-cat-color-label" [style.color]="cat.color">{{ cat.etiqueta }}</p>
             </div>
-            <span class="edu-cat-toggle">{{ categoriaAbierta === cat.id ? '▲' : '▼' }}</span>
+            <span class="edu-cat-toggle">{{ categoriaAbierta === i ? '▲' : '▼' }}</span>
           </div>
-          <div *ngIf="categoriaAbierta === cat.id" class="edu-cat-body">
+          <div *ngIf="categoriaAbierta === i" class="edu-cat-body">
             <p class="edu-cat-desc">{{ cat.descripcion }}</p>
             <ul class="edu-cat-items">
               <li *ngFor="let item of cat.ejemplos">{{ item }}</li>
             </ul>
             <div class="edu-cat-tip">
-              <span class="edu-cat-tip-icon">💡</span>
+              <i class="bi bi-lightbulb edu-cat-tip-icon" aria-hidden="true"></i>
               <span>{{ cat.tip }}</span>
             </div>
           </div>
@@ -84,7 +84,7 @@
       <div class="edu-steps">
         <div *ngFor="let paso of pasosProceso; let i = index" class="edu-step">
           <div class="edu-step-num">{{ i + 1 }}</div>
-          <div class="edu-step-icon">{{ paso.icono }}</div>
+          <i class="edu-step-icon" [ngClass]="paso.icono" aria-hidden="true"></i>
           <h3 class="edu-step-title">{{ paso.titulo }}</h3>
           <p class="edu-step-desc">{{ paso.descripcion }}</p>
           <div *ngIf="i < pasosProceso.length - 1" class="edu-step-arrow">→</div>
@@ -137,7 +137,7 @@
 
       <div class="edu-facts-grid">
         <article *ngFor="let hecho of hechos; let i = index" class="edu-fact-card" [style.--fact-i]="i">
-          <span class="edu-fact-icon">{{ hecho.icono }}</span>
+          <i class="edu-fact-icon" [ngClass]="hecho.icono" aria-hidden="true"></i>
           <p class="edu-fact-text">{{ hecho.texto }}</p>
           <span class="edu-fact-tag">{{ hecho.tag }}</span>
         </article>
@@ -153,7 +153,7 @@
 
       <div class="edu-ecosystem">
         <div *ngFor="let actor of actoresEcosistema" class="edu-eco-actor">
-          <div class="edu-eco-icon">{{ actor.icono }}</div>
+          <i class="edu-eco-icon" [ngClass]="actor.icono" aria-hidden="true"></i>
           <h3 class="edu-eco-title">{{ actor.titulo }}</h3>
           <p class="edu-eco-desc">{{ actor.descripcion }}</p>
         </div>

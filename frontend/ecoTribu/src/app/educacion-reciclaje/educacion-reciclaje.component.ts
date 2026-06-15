@@ -1,4 +1,4 @@
-import { NgFor, NgIf, NgOptimizedImage } from '@angular/common';
+import { NgClass, NgFor, NgIf, NgOptimizedImage } from '@angular/common';
 import { Component } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -49,13 +49,13 @@ interface PreguntaQuiz {
 @Component({
   selector: 'app-educacion-reciclaje',
   standalone: true,
-  imports: [NgFor, NgIf, NgOptimizedImage, RouterLink],
+  imports: [NgClass, NgFor, NgIf, NgOptimizedImage, RouterLink],
   templateUrl: './educacion-reciclaje.component.html',
   styleUrls: ['./educacion-reciclaje.component.css'],
 })
 export class EducacionReciclajeComponent {
 
-  categoriaAbierta: string | null = null;
+  categoriaAbierta: number | null = null;
   videoActivo = 2;
   preguntaActual = 0;
   respuestaSeleccionada: number | null = null;
@@ -65,7 +65,7 @@ export class EducacionReciclajeComponent {
   readonly categorias: ReadonlyArray<CategoriaReciclaje> = [
     {
       id: 'vidrio',
-      icono: '🟩',
+      icono: 'bi bi-cup-straw',
       titulo: 'Vidrio',
       etiqueta: 'Contenedor verde',
       color: '#16a34a',
@@ -75,7 +75,7 @@ export class EducacionReciclajeComponent {
     },
     {
       id: 'papel',
-      icono: '🟦',
+      icono: 'bi bi-file-earmark-text',
       titulo: 'Papel y cartón',
       etiqueta: 'Contenedor azul',
       color: '#1d4ed8',
@@ -85,7 +85,7 @@ export class EducacionReciclajeComponent {
     },
     {
       id: 'plastico',
-      icono: '🟨',
+      icono: 'bi bi-recycle',
       titulo: 'Plástico y latas',
       etiqueta: 'Contenedor amarillo',
       color: '#ca8a04',
@@ -95,7 +95,7 @@ export class EducacionReciclajeComponent {
     },
     {
       id: 'organico',
-      icono: '🟫',
+      icono: 'bi bi-flower1',
       titulo: 'Residuos orgánicos',
       etiqueta: 'Contenedor marrón',
       color: '#92400e',
@@ -105,7 +105,7 @@ export class EducacionReciclajeComponent {
     },
     {
       id: 'peligroso',
-      icono: '🔴',
+      icono: 'bi bi-exclamation-triangle',
       titulo: 'Residuos peligrosos',
       etiqueta: 'Puntos limpios',
       color: '#dc2626',
@@ -116,36 +116,36 @@ export class EducacionReciclajeComponent {
   ];
 
   readonly pasosProceso: ReadonlyArray<PasoReciclaje> = [
-    { icono: '🏠', titulo: 'Separación', descripcion: 'Clasificamos los residuos en casa por tipo de material.' },
-    { icono: '🚛', titulo: 'Recolección', descripcion: 'El servicio de limpieza recoge los contenedores por separado.' },
-    { icono: '🏭', titulo: 'Planta recicladora', descripcion: 'Los materiales se procesan, limpian y transforman.' },
-    { icono: '📦', titulo: 'Materia prima', descripcion: 'Se obtiene material reciclado de alta calidad.' },
-    { icono: '🛍️', titulo: 'Nuevo producto', descripcion: 'Fabricantes crean productos nuevos con ese material.' },
-    { icono: '♻️', titulo: 'Ciclo cerrado', descripcion: 'El ciclo se reinicia reduciendo residuos al mínimo.' },
+    { icono: 'bi bi-house-door', titulo: 'Separación', descripcion: 'Clasificamos los residuos en casa por tipo de material.' },
+    { icono: 'bi bi-truck', titulo: 'Recolección', descripcion: 'El servicio de limpieza recoge los contenedores por separado.' },
+    { icono: 'bi bi-gear-wide-connected', titulo: 'Planta recicladora', descripcion: 'Los materiales se procesan, limpian y transforman.' },
+    { icono: 'bi bi-box-seam', titulo: 'Materia prima', descripcion: 'Se obtiene material reciclado de alta calidad.' },
+    { icono: 'bi bi-bag-check', titulo: 'Nuevo producto', descripcion: 'Fabricantes crean productos nuevos con ese material.' },
+    { icono: 'bi bi-arrow-repeat', titulo: 'Ciclo cerrado', descripcion: 'El ciclo se reinicia reduciendo residuos al mínimo.' },
   ];
 
   readonly videos: ReadonlyArray<VideoEducativo>;
 
   readonly hechos: ReadonlyArray<HechoCurioso> = [
-    { icono: '🌊', texto: 'Hay una isla de basura plástica en el Pacífico que es 3 veces más grande que Francia.', tag: 'Océanos' },
-    { icono: '⚡', texto: 'Reciclar una lata de aluminio ahorra suficiente energía para mantener una TV encendida 3 horas.', tag: 'Energía' },
-    { icono: '🌳', texto: 'Cada tonelada de papel reciclado salva 17 árboles y 4,100 kWh de electricidad.', tag: 'Bosques' },
-    { icono: '💧', texto: 'Producir una botella plástica consume 2 litros de agua. Reciclarla usa un 88% menos.', tag: 'Agua' },
-    { icono: '🐢', texto: 'Más de 1 millón de aves marinas y 100,000 mamíferos mueren por plástico cada año.', tag: 'Biodiversidad' },
-    { icono: '🌡️', texto: 'El reciclaje global podría reducir las emisiones de CO₂ en un 3.6 millones de toneladas al año.', tag: 'Clima' },
-    { icono: '💼', texto: 'La industria del reciclaje genera más de 1.5 millones de empleos solo en América Latina.', tag: 'Economía' },
-    { icono: '🧴', texto: 'Solo el 9% del plástico producido en la historia ha sido reciclado.', tag: 'Datos alarmantes' },
+    { icono: 'bi bi-water', texto: 'Hay una isla de basura plástica en el Pacífico que es 3 veces más grande que Francia.', tag: 'Océanos' },
+    { icono: 'bi bi-lightning-charge', texto: 'Reciclar una lata de aluminio ahorra suficiente energía para mantener una TV encendida 3 horas.', tag: 'Energía' },
+    { icono: 'bi bi-tree', texto: 'Cada tonelada de papel reciclado salva 17 árboles y 4,100 kWh de electricidad.', tag: 'Bosques' },
+    { icono: 'bi bi-droplet', texto: 'Producir una botella plástica consume 2 litros de agua. Reciclarla usa un 88% menos.', tag: 'Agua' },
+    { icono: 'bi bi-globe-americas', texto: 'Más de 1 millón de aves marinas y 100,000 mamíferos mueren por plástico cada año.', tag: 'Biodiversidad' },
+    { icono: 'bi bi-thermometer-sun', texto: 'El reciclaje global podría reducir las emisiones de CO₂ en un 3.6 millones de toneladas al año.', tag: 'Clima' },
+    { icono: 'bi bi-briefcase', texto: 'La industria del reciclaje genera más de 1.5 millones de empleos solo en América Latina.', tag: 'Economía' },
+    { icono: 'bi bi-bar-chart-line', texto: 'Solo el 9% del plástico producido en la historia ha sido reciclado.', tag: 'Datos alarmantes' },
   ];
 
   readonly actoresEcosistema: ReadonlyArray<ActorEcosistema> = [
-    { icono: '👨‍👩‍👧', titulo: 'Ciudadanos', descripcion: 'Primer eslabón: separamos y depositamos los residuos correctamente.' },
-    { icono: '🏫', titulo: 'Escuelas', descripcion: 'Educan sobre reciclaje y forman hábitos desde la infancia.' },
-    { icono: '🏛️', titulo: 'Municipios', descripcion: 'Gestionan la recolección y los puntos de reciclaje locales.' },
-    { icono: '🏭', titulo: 'Plantas recicladoras', descripcion: 'Procesan los materiales y los convierten en materia prima.' },
-    { icono: '🏢', titulo: 'Empresas', descripcion: 'Usan materiales reciclados y financian programas verdes.' },
-    { icono: '🌿', titulo: 'ONGs ambientales', descripcion: 'Sensibilizan, presionan y generan proyectos de impacto.' },
-    { icono: '👷', titulo: 'Recicladores informales', descripcion: 'Recuperan materiales valiosos y generan sustento familiar.' },
-    { icono: '📱', titulo: 'Tecnología', descripcion: 'Apps, sensores y big data optimizan rutas y procesos.' },
+    { icono: 'bi bi-people-fill', titulo: 'Ciudadanos', descripcion: 'Primer eslabón: separamos y depositamos los residuos correctamente.' },
+    { icono: 'bi bi-mortarboard-fill', titulo: 'Escuelas', descripcion: 'Educan sobre reciclaje y forman hábitos desde la infancia.' },
+    { icono: 'bi bi-building-fill', titulo: 'Municipios', descripcion: 'Gestionan la recolección y los puntos de reciclaje locales.' },
+    { icono: 'bi bi-gear-wide-connected', titulo: 'Plantas recicladoras', descripcion: 'Procesan los materiales y los convierten en materia prima.' },
+    { icono: 'bi bi-briefcase-fill', titulo: 'Empresas', descripcion: 'Usan materiales reciclados y financian programas verdes.' },
+    { icono: 'bi bi-tree', titulo: 'ONGs ambientales', descripcion: 'Sensibilizan, presionan y generan proyectos de impacto.' },
+    { icono: 'bi bi-person-badge-fill', titulo: 'Recicladores informales', descripcion: 'Recuperan materiales valiosos y generan sustento familiar.' },
+    { icono: 'bi bi-cpu-fill', titulo: 'Tecnología', descripcion: 'Apps, sensores y big data optimizan rutas y procesos.' },
   ];
 
   readonly preguntasQuiz: ReadonlyArray<PreguntaQuiz> = [
@@ -261,8 +261,8 @@ export class EducacionReciclajeComponent {
     }
   }
 
-  toggleCategoria(id: string): void {
-    this.categoriaAbierta = this.categoriaAbierta === id ? null : id;
+  toggleCategoria(index: number): void {
+    this.categoriaAbierta = this.categoriaAbierta === index ? null : index;
   }
 
   responder(opcionIndex: number): void {

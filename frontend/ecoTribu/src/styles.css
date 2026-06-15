@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'bootstrap-icons/font/bootstrap-icons.css';
 
 /* You can add global styles to this file, and also import other style files */
 
@@ -37,3 +38,15 @@ a[class*='btn'] {
     line-height: 1.25;
     letter-spacing: 0.012em;
 }
+
+main .edu-cat-card{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+main .edu-cat-card-open{border-color:rgba(16,185,129,.45);box-shadow:0 8px 18px rgba(2,132,199,.12)}
+main .edu-categories-grid{align-items:start}
+main .edu-cat-card{height:fit-content}
+main .edu-cat-header>div{flex:1;min-width:0}
+main .edu-cat-icon{width:2.2rem;justify-content:center}
+main .edu-cat-color-label{margin:.1rem 0 0;font-size:.78rem;font-weight:800;line-height:1.25}
+main .edu-cat-toggle{font-size:.9rem;font-weight:900;color:#047857;line-height:1}
+main .edu-step{transition:transform .2s ease,box-shadow .2s ease}
+main .edu-step:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(2,132,199,.12)}
+main .edu-step-icon{display:inline-flex;align-items:center;justify-content:center;width:2.35rem;height:2.35rem;border-radius:999px;background:rgba(16,185,129,.12);color:#047857;border:1px solid rgba(16,185,129,.25)}
