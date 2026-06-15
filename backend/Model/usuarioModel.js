@@ -44,6 +44,14 @@ const usuarioSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    pendienteValidacionRol: {
+      type: Boolean,
+      default: false,
+    },
+    notificacionValidacionLeida: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

@@ -200,27 +200,65 @@ export class EducacionReciclajeComponent {
         etiqueta: '¿Qué es reciclar?',
         titulo: 'Introducción al reciclaje',
         descripcion: 'Una explicación clara y visual sobre qué es el reciclaje, por qué es importante y cómo comenzar desde casa con pasos sencillos.',
-        urlSegura: this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/T8H8g0eYRjs'),
+        urlSegura: this.aUrlSeguraEmbedYouTube('https://www.youtube.com/watch?v=YiHqjzNe1gE'),
       },
       {
         etiqueta: 'Los 5 contenedores',
         titulo: 'Cómo separar correctamente la basura',
         descripcion: 'Aprende a identificar cada contenedor de reciclaje y qué materiales van en cada uno para hacerlo de manera correcta y eficiente.',
-        urlSegura: this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/cXd8xKEeW7U'),
+        urlSegura: this.aUrlSeguraEmbedYouTube('https://www.youtube.com/watch?v=VsKOYPAKMoA'),
       },
       {
         etiqueta: 'Plástico en océanos',
         titulo: 'La contaminación por plástico',
         descripcion: 'Descubre el impacto devastador del plástico en los océanos y ecosistemas marinos, y qué podemos hacer para revertirlo.',
-        urlSegura: this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/aWZFhquco9E'),
+        urlSegura: this.aUrlSeguraEmbedYouTube('https://www.youtube.com/watch?v=HQTUWK7CM-Y'),
       },
       {
         etiqueta: 'Economía circular',
         titulo: 'El futuro: economía circular',
         descripcion: 'La economía circular es el modelo que eliminará el concepto de "basura". Conoce cómo funciona y por qué es la solución definitiva.',
-        urlSegura: this.sanitizer.bypassSecurityTrustResourceUrl('https://www.youtube.com/embed/xfYkpCO3vSg'),
+        urlSegura: this.aUrlSeguraEmbedYouTube('https://youtu.be/ABn3JkY5zO0?si=Fg0LZJSVGV1MgPcp'),
       },
     ];
+  }
+
+  private aUrlSeguraEmbedYouTube(urlOriginal: string): SafeResourceUrl {
+    const urlEmbed = this.normalizarUrlYouTubeAEmbed(urlOriginal) ?? urlOriginal;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(urlEmbed);
+  }
+
+  private normalizarUrlYouTubeAEmbed(urlOriginal: string): string | null {
+    try {
+      const url = new URL(urlOriginal);
+      const host = url.hostname.replace('www.', '');
+
+      if (host === 'youtu.be') {
+        const id = url.pathname.replace('/', '').trim();
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com') {
+        if (url.pathname === '/watch') {
+          const id = url.searchParams.get('v')?.trim();
+          return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+
+        if (url.pathname.startsWith('/shorts/')) {
+          const id = url.pathname.split('/')[2]?.trim();
+          return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+
+        if (url.pathname.startsWith('/embed/')) {
+          const id = url.pathname.split('/')[2]?.trim();
+          return id ? `https://www.youtube.com/embed/${id}` : null;
+        }
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   toggleCategoria(id: string): void {

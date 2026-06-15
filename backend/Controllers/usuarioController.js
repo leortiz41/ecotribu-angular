@@ -11,47 +11,88 @@ const sanitizeUsuario = (usuario) => {
   return usuarioLimpio;
 };
 
+const escaparRegex = (texto = '') => String(texto).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const manejarErrorMongoose = crearManejadorErroresMongoose({
   duplicateMessage: 'Ya existe un usuario con ese email.',
   validationMessage: 'Datos invalidos para el usuario.',
 });
 
-const validarEscuela = async (escuelaId, res) => {
-  if (!isValidObjectId(escuelaId)) {
+const resolverEscuela = async (escuelaInput, res) => {
+  const escuelaTexto = String(escuelaInput ?? '').trim();
+
+  if (!escuelaTexto) {
     res.status(400).json({
       success: false,
-      message: 'El id de escuela no es valido.',
+      message: 'La escuela es obligatoria.',
     });
-    return false;
+    return null;
   }
 
-  const escuela = await Escuela.findOne({ _id: escuelaId, activa: true });
+  if (isValidObjectId(escuelaTexto)) {
+    const escuelaPorId = await Escuela.findOne({ _id: escuelaTexto, activa: true });
 
-  if (!escuela) {
+    if (!escuelaPorId) {
+      res.status(404).json({
+        success: false,
+        message: 'Escuela no encontrada o inactiva.',
+      });
+      return null;
+    }
+
+    return escuelaPorId;
+  }
+
+  const regexNombreExacto = new RegExp(`^${escaparRegex(escuelaTexto)}$`, 'i');
+  const coincidencias = await Escuela.find({ nombre: regexNombreExacto, activa: true }).limit(2);
+
+  if (coincidencias.length === 0) {
     res.status(404).json({
       success: false,
-      message: 'Escuela no encontrada o inactiva.',
+      message: 'No se encontro una escuela activa con ese nombre.',
     });
-    return false;
+    return null;
   }
 
-  return true;
+  if (coincidencias.length > 1) {
+    res.status(409).json({
+      success: false,
+      message: 'Hay varias escuelas con ese nombre. Usa un nombre unico o el id de la escuela.',
+    });
+    return null;
+  }
+
+  return coincidencias[0];
 };
 
 const crearUsuario = async (req, res) => {
   try {
-    const { escuela } = req.body;
+    const { escuela, solicitaValidacionRol } = req.body;
 
-    const escuelaValida = await validarEscuela(escuela, res);
-    if (!escuelaValida) {
+    const escuelaResuelta = await resolverEscuela(escuela, res);
+    if (!escuelaResuelta) {
       return;
     }
 
-    const usuario = await Usuario.create(req.body);
+    const requiereValidacionRol = solicitaValidacionRol !== false;
+    const payload = {
+      ...req.body,
+      escuela: escuelaResuelta._id,
+      pendienteValidacionRol: requiereValidacionRol,
+      notificacionValidacionLeida: !requiereValidacionRol,
+    };
+
+    delete payload.solicitaValidacionRol;
+
+    const usuario = await Usuario.create(payload);
+
+    const mensaje = requiereValidacionRol
+      ? 'Usuario creado correctamente. Solicitud enviada al administrador para validar el rol.'
+      : 'Usuario creado correctamente.';
 
     return res.status(201).json({
       success: true,
-      message: 'Usuario creado correctamente.',
+      message: mensaje,
       data: sanitizeUsuario(usuario),
     });
   } catch (error) {
@@ -138,7 +179,18 @@ const actualizarUsuario = async (req, res) => {
       });
     }
 
-    const camposPermitidos = ['nombre', 'email', 'password', 'rol', 'escuela', 'grado', 'puntos', 'activo'];
+    const camposPermitidos = [
+      'nombre',
+      'email',
+      'password',
+      'rol',
+      'escuela',
+      'grado',
+      'puntos',
+      'activo',
+      'pendienteValidacionRol',
+      'notificacionValidacionLeida',
+    ];
     const camposRecibidos = Object.keys(req.body);
     const hayCampoInvalido = camposRecibidos.some((campo) => !camposPermitidos.includes(campo));
 
@@ -150,10 +202,12 @@ const actualizarUsuario = async (req, res) => {
     }
 
     if (req.body.escuela) {
-      const escuelaValida = await validarEscuela(req.body.escuela, res);
-      if (!escuelaValida) {
+      const escuelaResuelta = await resolverEscuela(req.body.escuela, res);
+      if (!escuelaResuelta) {
         return;
       }
+
+      req.body.escuela = escuelaResuelta._id;
     }
 
     const usuario = await Usuario.findById(id).select('+password');

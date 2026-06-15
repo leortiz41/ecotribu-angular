@@ -94,15 +94,13 @@
             [attr.list]="escuelas.length > 0 ? 'escuelasDisponibles' : null"
           />
           <datalist id="escuelasDisponibles">
-            <option *ngFor="let escuela of escuelas" [value]="escuela._id">
-              {{ escuela.nombre }}{{ escuela.codigo ? ' - ' + escuela.codigo : '' }}
-            </option>
+            <option *ngFor="let escuela of escuelas" [value]="escuela.nombre" [label]="escuela.codigo ? escuela.nombre + ' - ' + escuela.codigo : escuela.nombre"></option>
           </datalist>
           <p *ngIf="cargandoEscuelas" class="field-help">
             Cargando escuelas...
           </p>
           <p *ngIf="!cargandoEscuelas && escuelas.length > 0" class="field-help">
-            Selecciona una escuela o pega su ID.
+            Selecciona una escuela por nombre.
           </p>
           <p *ngIf="formularioRegistro.controls.escuela.touched && formularioRegistro.controls.escuela.invalid" class="field-error">
             La escuela es obligatoria.

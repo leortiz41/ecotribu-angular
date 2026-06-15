@@ -60,6 +60,7 @@ export class RegistroComponent implements OnInit {
       password: value.password,
       rol: value.rol,
       escuela: value.escuela.trim(),
+      solicitaValidacionRol: true,
     };
 
     this.authService.registrarUsuario(payload).subscribe({

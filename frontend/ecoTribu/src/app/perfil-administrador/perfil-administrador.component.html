@@ -63,9 +63,18 @@
           <p class="text-lg font-black text-emerald-700 sm:text-2xl">Panel de Control</p>
           <p class="mt-1 text-sm text-emerald-700/80">Gestión centralizada de la plataforma</p>
         </div>
-        <button type="button" class="btn-refresh rounded-2xl px-6 py-3 text-lg font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
-          {{ cargando ? 'Actualizando...' : 'Actualizar' }}
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-black text-amber-800"
+            (click)="irASolicitudesRolPendientes()"
+          >
+            Solicitudes de rol: {{ totalSolicitudesValidacionRolPendientes }}
+          </button>
+          <button type="button" class="btn-refresh rounded-2xl px-6 py-3 text-lg font-black text-white" (click)="cargarReporte()" [disabled]="cargando">
+            {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+          </button>
+        </div>
       </div>
     </article>
 
@@ -84,6 +93,9 @@
       </button>
     </nav>
 
+<!-- sección de resumen general con métricas clave, gráficos de distribución y 
+ listados de últimas escuelas y usuarios activos. -->
+ 
     <section *ngIf="vistaActual === 'resumen'">
       <article class="stats-wrap mb-7 rounded-[1.35rem] bg-emerald-700 px-5 py-6 sm:px-7 sm:py-7">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
@@ -149,7 +161,9 @@
         </article>
       </div>
     </section>
-
+<!-- las secciones de gestión de escuelas, usuarios y contenido, cada una con su propio diseño
+  y funcionalidades específicas para administrar esos aspectos de la plataforma. -->
+  
     <section *ngIf="vistaActual === 'escuelas'" class="grid gap-6 lg:grid-cols-[1fr_1fr]">
       <article class="panel-card">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -160,10 +174,16 @@
           <div>
             <label class="field-label" for="escNombre">Nombre</label>
             <input id="escNombre" class="field-input" formControlName="nombre" placeholder="Escuela Jose Marti" />
+            <p *ngIf="escuelaForm.controls.nombre.touched && escuelaForm.controls.nombre.invalid" class="text-xs font-semibold text-red-600 mt-1">
+              El nombre es obligatorio y debe tener al menos 3 caracteres.
+            </p>
           </div>
           <div>
-            <label class="field-label" for="escCodigo">Codigo</label>
+            <label class="field-label" for="escCodigo">Codigo (opcional)</label>
             <input id="escCodigo" class="field-input" formControlName="codigo" placeholder="ESC-001" />
+            <p *ngIf="escuelaForm.controls.codigo.touched && escuelaForm.controls.codigo.hasError('minlength')" class="text-xs font-semibold text-red-600 mt-1">
+              Si escribes código, debe tener al menos 2 caracteres.
+            </p>
           </div>
           <label class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
             <input type="checkbox" formControlName="activa" />
@@ -172,6 +192,9 @@
           <button type="submit" class="btn-refresh rounded-xl px-5 py-2.5 text-base font-black text-white">Guardar escuela</button>
         </form>
       </article>
+
+      <!-- sección de listado y gestión de escuelas, con filtros por nombre 
+       y estado, y opciones para editar o cambiar estado. -->
 
       <article class="panel-card">
         <h2 class="panel-title text-emerald-700">Escuelas registradas</h2>
@@ -192,6 +215,9 @@
           <span class="admin-filter-count">{{ escuelasFiltradas.length }} resultado{{ escuelasFiltradas.length === 1 ? '' : 's' }}</span>
         </div>
 
+<!-- filtro de escuelas por nombre y estado, se muestra mensaje si no hay resultados, 
+ y se listan las escuelas filtradas con opciones para editar o cambiar estado. -->
+
         <div *ngIf="escuelasFiltradas.length === 0" class="empty-state">No hay escuelas con ese filtro.</div>
         <ul *ngIf="escuelasFiltradas.length > 0" class="space-y-2 pl-0 m-0 list-none">
           <li *ngFor="let esc of escuelasFiltradas" class="list-item">
@@ -206,7 +232,7 @@
             <div class="mt-3 flex gap-2">
               <a class="btn-action-edit" [routerLink]="['/escuela']" [queryParams]="{ edit: esc._id }">Editar</a>
               <button type="button" class="btn-action-delete" (click)="toggleEstadoEscuela(esc)">
-                {{ esc.activa ? 'Desactivar' : 'Activar nuevamente' }}
+                {{ esc.activa ? 'Desactivar' : 'Activar' }}
               </button>
             </div>
           </li>
@@ -292,6 +318,12 @@
       <article class="panel-card">
         <h2 class="panel-title text-emerald-700">Usuarios del sistema</h2>
 
+        <div *ngIf="totalSolicitudesValidacionRolPendientes > 0" class="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p class="text-sm font-black text-amber-800">
+            Tienes {{ totalSolicitudesValidacionRolPendientes }} solicitud{{ totalSolicitudesValidacionRolPendientes === 1 ? '' : 'es' }} pendiente{{ totalSolicitudesValidacionRolPendientes === 1 ? '' : 's' }} de validación de rol.
+          </p>
+        </div>
+
         <div class="admin-filter-bar mb-3">
           <input
             type="text"
@@ -302,6 +334,7 @@
           />
           <div class="admin-filter-chips">
             <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'todos'" (click)="filtroUsuarioRol = 'todos'">Todos</button>
+            <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'pendiente'" (click)="filtroUsuarioRol = 'pendiente'">Pendientes</button>
             <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'alumno'" (click)="filtroUsuarioRol = 'alumno'">Alumnos</button>
             <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'profesor'" (click)="filtroUsuarioRol = 'profesor'">Profesores</button>
             <button type="button" class="filter-chip" [class.filter-chip-active]="filtroUsuarioRol === 'administrador'" (click)="filtroUsuarioRol = 'administrador'">Admins</button>
@@ -315,9 +348,13 @@
             <p class="font-bold text-slate-900">{{ usr.nombre }}</p>
             <p class="text-xs text-slate-600">{{ usr.email }}</p>
             <p class="text-xs font-semibold text-emerald-700">{{ usr.rol }}</p>
+            <p *ngIf="usr.pendienteValidacionRol" class="mt-1 inline-block rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-black text-amber-800">
+              Rol pendiente de validación
+            </p>
             <p class="text-xs text-slate-500">Escuela: {{ usr.escuela?.nombre || 'Sin escuela' }}</p>
             <p class="text-xs text-slate-500">Clase/Grado: {{ usr.grado || 'No asignado' }}</p>
             <div class="mt-3 flex gap-2">
+              <button *ngIf="usr.pendienteValidacionRol" type="button" class="btn-action-edit" (click)="validarRolUsuario(usr)">Validar rol</button>
               <button type="button" class="btn-action-edit" (click)="editarUsuario(usr, $event)">Editar</button>
               <button type="button" class="btn-action-delete" (click)="eliminarUsuario(usr)">Eliminar</button>
             </div>

@@ -32,6 +32,7 @@ export interface DatosRegistroUsuario {
   rol: 'alumno' | 'profesor' | 'administrador';
   escuela: string;
   grado?: string;
+  solicitaValidacionRol?: boolean;
 }
 
 export interface EscuelaCatalogo {

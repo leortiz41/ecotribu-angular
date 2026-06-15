@@ -12,6 +12,25 @@ const manejarErrorMongoose = crearManejadorErroresMongoose({
 // Validación de ObjectId de Mongoose para asegurar que los IDs proporcionados sean válidos
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
+const normalizarPayloadEscuela = (payload = {}) => {
+  const data = { ...payload };
+
+  if (typeof data.codigo === 'string') {
+    const codigoLimpio = data.codigo.trim();
+    if (!codigoLimpio) {
+      delete data.codigo;
+    } else {
+      data.codigo = codigoLimpio;
+    }
+  }
+
+  if (typeof data.nombre === 'string') {
+    data.nombre = data.nombre.trim();
+  }
+
+  return data;
+};
+
 const sincronizarProfesoresPorEstadoEscuela = async (escuelaId, activa) => {
   await Usuario.updateMany(
     {
@@ -31,7 +50,8 @@ const sincronizarProfesoresPorEstadoEscuela = async (escuelaId, activa) => {
 //crear
 const crearEscuela = async (req, res) => {
   try {
-    const escuela = await Escuela.create(req.body);
+    const payload = normalizarPayloadEscuela(req.body);
+    const escuela = await Escuela.create(payload);
 
     return res.status(201).json({
       success: true,
@@ -109,7 +129,9 @@ const actualizarEscuela = async (req, res) => {
       });
     }
 
-    const escuela = await Escuela.findByIdAndUpdate(id, req.body, {
+    const payload = normalizarPayloadEscuela(req.body);
+
+    const escuela = await Escuela.findByIdAndUpdate(id, payload, {
       new: true,
       runValidators: true,
     });
@@ -121,7 +143,7 @@ const actualizarEscuela = async (req, res) => {
       });
     }
 
-    if (Object.prototype.hasOwnProperty.call(req.body, 'activa')) {
+    if (Object.prototype.hasOwnProperty.call(payload, 'activa')) {
       await sincronizarProfesoresPorEstadoEscuela(id, escuela.activa);
     }
 

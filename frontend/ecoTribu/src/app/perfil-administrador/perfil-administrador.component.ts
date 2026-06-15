@@ -78,7 +78,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   private adminChart: Chart | null = null;
 
   // Filtros usuarios
-  filtroUsuarioRol: 'todos' | 'alumno' | 'profesor' | 'administrador' = 'todos';
+  filtroUsuarioRol: 'todos' | 'alumno' | 'profesor' | 'administrador' | 'pendiente' = 'todos';
   filtroUsuarioNombre = '';
 
   // Filtros cuestionarios
@@ -91,13 +91,13 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
 
   readonly escuelaForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
-    codigo: ['', [Validators.required, Validators.minLength(2)]],
+    codigo: ['', [Validators.minLength(2)]],
     activa: [true],
   });
 
   readonly escuelaEdicionForm = this.fb.nonNullable.group({
     nombre: ['', [Validators.required, Validators.minLength(3)]],
-    codigo: ['', [Validators.required, Validators.minLength(2)]],
+    codigo: ['', [Validators.minLength(2)]],
     activa: [true],
   });
 
@@ -146,6 +146,14 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     return this.usuarios.filter((u) => u.rol === 'alumno' && u.activo).length;
   }
 
+  get solicitudesValidacionRolPendientes(): UsuarioAdmin[] {
+    return this.usuarios.filter((u) => u.pendienteValidacionRol);
+  }
+
+  get totalSolicitudesValidacionRolPendientes(): number {
+    return this.solicitudesValidacionRolPendientes.length;
+  }
+
   get retosPublicados(): RetoAdmin[] {
     return this.retos.filter((r) => r.estado === 'publicado');
   }
@@ -157,10 +165,18 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
   get usuariosFiltrados(): UsuarioAdmin[] {
     const nombreLower = this.filtroUsuarioNombre.trim().toLowerCase();
     return this.usuarios.filter((u) => {
-      const coincideRol = this.filtroUsuarioRol === 'todos' || u.rol === this.filtroUsuarioRol;
+      const coincideRol =
+        this.filtroUsuarioRol === 'todos'
+        || (this.filtroUsuarioRol === 'pendiente' ? Boolean(u.pendienteValidacionRol) : u.rol === this.filtroUsuarioRol);
       const coincideNombre = !nombreLower || u.nombre.toLowerCase().includes(nombreLower) || u.email.toLowerCase().includes(nombreLower);
       return coincideRol && coincideNombre;
     });
+  }
+
+  irASolicitudesRolPendientes(): void {
+    this.cambiarVista('usuarios');
+    this.filtroUsuarioRol = 'pendiente';
+    this.filtroUsuarioNombre = '';
   }
 
   get cuestionariosFiltrados(): CuestionarioAdmin[] {
@@ -279,9 +295,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     }
 
     const value = this.escuelaForm.getRawValue();
+    const codigoNormalizado = value.codigo.trim();
     const payload: CrearEscuelaPayload = {
       nombre: value.nombre.trim(),
-      codigo: value.codigo.trim(),
+      codigo: codigoNormalizado || undefined,
       activa: Boolean(value.activa),
     };
 
@@ -294,9 +311,9 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
         this.escuelaForm.reset({ nombre: '', codigo: '', activa: true });
         this.refrescarDatos();
       },
-      error: () => {
+      error: (error) => {
         this.cargando = false;
-        this.mensajeAccion = 'No fue posible crear la escuela.';
+        this.mensajeError = this.obtenerMensajeErrorApi(error, 'No fue posible crear la escuela.');
       },
     });
   }
@@ -315,6 +332,7 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
       rol: value.rol as 'alumno' | 'profesor' | 'administrador',
       escuela: value.escuela,
       grado: value.grado.trim() || undefined,
+      solicitaValidacionRol: false,
     };
 
     this.cargando = true;
@@ -422,9 +440,10 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
     }
 
     const value = this.escuelaEdicionForm.getRawValue();
+    const codigoNormalizado = value.codigo.trim();
     const payload: ActualizarEscuelaPayload = {
       nombre: value.nombre.trim(),
-      codigo: value.codigo.trim(),
+      codigo: codigoNormalizado || undefined,
       activa: Boolean(value.activa),
     };
 
@@ -498,6 +517,28 @@ export class PerfilAdministradorComponent implements OnInit, AfterViewInit, OnDe
       error: () => {
         this.cargando = false;
         this.mensajeError = 'No fue posible desactivar el usuario.';
+      },
+    });
+  }
+
+  validarRolUsuario(usuario: UsuarioAdmin): void {
+    this.cargando = true;
+    this.mensajeError = null;
+
+    const payload: ActualizarUsuarioAdminPayload = {
+      pendienteValidacionRol: false,
+      notificacionValidacionLeida: true,
+      activo: true,
+    };
+
+    this.perfilAdminService.actualizarUsuario(usuario._id, payload).subscribe({
+      next: () => {
+        this.mensajeAccion = `Rol validado correctamente para ${usuario.nombre}.`;
+        this.refrescarDatos();
+      },
+      error: (error) => {
+        this.cargando = false;
+        this.mensajeError = this.obtenerMensajeErrorApi(error, 'No fue posible validar el rol del usuario.');
       },
     });
   }

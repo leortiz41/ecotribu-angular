@@ -18,13 +18,6 @@
 	gap: 1rem;
 }
 
-.edu-logo-text {
-	font-size: 1.25rem;
-	font-weight: 900;
-	color: #fff;
-	letter-spacing: 0.02em;
-}
-
 .edu-header-title {
 	flex: 1;
 	text-align: center;
@@ -154,9 +147,11 @@
 
 .edu-section-sub {
 	margin: 0.4rem 0 0;
-	color: #475569;
+	color: #047857;
 	font-size: 0.95rem;
 }
+
+.edu-title-white,.edu-sub-light{color:#fff}
 
 .edu-categories-grid {
 	display: grid;

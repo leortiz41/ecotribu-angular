@@ -18,6 +18,8 @@ export interface UsuarioAdmin {
   puntos?: number;
   grado?: string;
   activo: boolean;
+  pendienteValidacionRol?: boolean;
+  notificacionValidacionLeida?: boolean;
   escuela?: { _id: string; nombre: string; codigo?: string };
 }
 
@@ -92,6 +94,7 @@ export interface CrearUsuarioAdminPayload {
   rol: 'alumno' | 'profesor' | 'administrador';
   escuela: string;
   grado?: string;
+  solicitaValidacionRol?: boolean;
 }
 
 export interface ActualizarEscuelaPayload {
@@ -108,6 +111,8 @@ export interface ActualizarUsuarioAdminPayload {
   escuela?: string;
   grado?: string;
   activo?: boolean;
+  pendienteValidacionRol?: boolean;
+  notificacionValidacionLeida?: boolean;
 }
 
 export interface ActualizarRetoAdminPayload {
@@ -174,7 +179,7 @@ export class PerfilAdministradorService {
   }
 
   private obtenerEscuelas(): Observable<EscuelaAdmin[]> {
-    return this.http.get<RespuestaApi<EscuelaAdmin[]>>(this.escuelasApiUrl).pipe(
+    return this.http.get<RespuestaApi<EscuelaAdmin[]>>(`${this.escuelasApiUrl}?incluirInactivas=true`).pipe(
       map((res) => res.data ?? []),
       catchError(() => of([]))
     );
