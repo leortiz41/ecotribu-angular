@@ -396,24 +396,6 @@ http://localhost:4200
 
 ---
 
-## Variables de Entorno del Backend
-
-Se recomienda crear un archivo `.env` dentro de la carpeta `backend` con la siguiente configuración:
-
-```env
-PORT=3000
-MONGO_URI=mongodb://127.0.0.1:27017/ecotribuescolar
-```
-
-Si posteriormente se implementa autenticación con JWT, se puede agregar:
-
-```env
-JWT_SECRET=clave_secreta_ecotribu
-JWT_EXPIRES_IN=1d
-```
-
----
-
 ## Dependencias del Backend
 
 | Dependencia | Uso |
